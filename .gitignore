@@ -7,3 +7,5 @@ Thumbs.db
 # Superset — per-user override + runtime state (keep shared scripts committed)
 .superset/config.local.json
 .superset/.dev-port
+# Submission zip (build artifact; the submission/ folder is the source)
+/PM101-Voya-Hotel-Cancellation-Submission.zip
