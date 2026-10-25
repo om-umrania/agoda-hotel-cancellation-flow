@@ -1,66 +1,37 @@
-# Product Note, Hotel Cancellation Flow
+# Product note: Voya hotel cancellation on Android
 
-*A 1–2 page narrative on the overall flow. Product: **Voya** (Android), hotels fulfilled via
-Agoda's Demand API.*
+## Problem and scope
 
-## The moment we're designing for
-Cancellation is the most emotional step in a travel product. The user's plans just fell
-through; they're anxious about their money and half-expecting a fight. If we make it clear,
-fast, and honest, a *negative* moment becomes a reason to trust us, and to book again. If
-we make it opaque, they call support, dispute with their bank, and leave a one-star review.
-So the entire flow is built around one promise: **no surprises about the refund.**
+Voya is an Android app that sells hotel rooms sourced from Agoda. A traveler who booked through Voya should be able to cancel from the app and know what it will cost before agreeing. This note covers version 1: full cancellation of one confirmed booking, started from My trips. We assume Voya works under Agoda's Partner Fulfillment model, where Voya takes the payment and handles service after the sale. Date changes, cancelling one room out of several, no-show disputes and the payment system that returns money to the traveler are not designed here. Every hotel, price and date in the wireframes is made-up test data.
 
-## The flow, end to end
-A user opens **Trips → Booking Details** and taps **Cancel booking**. Before anything is
-committed, we call Agoda's **Cancellation Preview** and show a **Refund Preview**: the money
-they paid, the penalty (if any), the refund they'll receive, the method, and the ETA, in
-plain language, with the free-cancellation deadline shown as a live countdown while it's
-still free. The refund number is **Agoda's, not ours**, we never calculate it on the device,
-so what's shown is what's paid.
+## How the flow works
 
-The screen adapts to the policy: **Free** (full refund), **Partial** (penalty deducted), or
-**Non-refundable** (we say so plainly and, in a future version, offer travel credit instead).
-The primary button states the outcome, *"Cancel & get ₹18,240 back"* or *"Cancel, no
-refund"*, so the consequence is impossible to miss.
+The traveler opens My trips and picks a booking. Voya already stores its own reference next to Agoda's bookingId, and before showing the Cancel booking button the backend reads the current status from Agoda's Booking Detail. If the booking is already cancelled, or its status does not allow self-service cancellation, the button is replaced by the existing status or a route to support.
 
-If the user continues, they pick an optional **reason** (mapped to Agoda's `cancelReason`
-codes for analytics and supply insight), then hit a deliberate **Confirm** gated by
-**re-authentication** (biometric). That friction is intentional: it prevents accidental and
-regretted cancellations. We then call Agoda's **Cancellation Confirm**, passing the
-`reference` from the Preview plus our own **idempotency key**, so a double-tap or retry can
-never cancel twice or double-refund.
+Tapping Cancel booking makes the backend call Cancel Preview. Agoda returns a reference, the policy text, what was paid and what would be refunded. Voya shows those figures beside the hotel name and dates and asks for a clear yes or no. Only then does the backend send Confirm, using the reference and refund amount from that preview. A successful Confirm returns HTTP 200 with an empty body, so Voya does not wait for a field that says what happened. It reads Booking Detail again and shows Cancellation confirmed when the status says cancelled.
 
-Because Agoda's cancellation SLA is ~120 seconds and refunds can settle asynchronously, we
-show an honest **Processing** state and tolerate a `PENDING` result rather than spinning
-forever. The flow ends on a **Confirmation** screen, cancellation reference, refund amount,
-and a refund **timeline**, backed by an email/push receipt and a **refund status tracker**
-in Trips. Every failure path (network, API error, auth, or a request made past the
-cancellation window) resolves to a clear next step: retry, contact support, or route to
-**assisted / fee-waiver** cancellation. Nothing dead-ends.
+The policy text on Booking details comes from the structured cancellation data in the Search response, saved when the traveler booked. It is a reminder and not a quote. Deadlines and amounts can change, so Preview is the only source for the figure on the review screen.
 
-## Why these choices
-- **Transparency over optimism.** Showing the real refund up front costs us some completed
-  cancellations but saves far more in disputes, chargebacks, and support load, and it's the
-  honest thing to do.
-- **Server-authoritative money.** The refund is Agoda's number, surfaced, never recomputed.
-- **Deliberate, reversible-feeling friction.** Re-auth + an outcome-stating CTA protect the
-  user from themselves without feeling like a trap.
-- **Designed for the unhappy path.** The policy branches and error states *are* the product;
-  the happy path is the simple part.
+## Why the screens are in this order
 
-## What we'll watch
-Self-serve cancel rate, cancellation support tickets, disputes/chargebacks, drop-off at the
-Refund Preview, refund-SLA adherence, post-cancel rebooking, and CSAT on the flow. The
-Refund Preview is the screen that matters most, if people abandon there, our refund copy or
-policy transparency needs work, not the funnel.
+The refund appears before the destructive button because it is the number the traveler is deciding on. Hotel and dates repeat on the review screen so someone with several trips does not cancel the wrong one. Keep booking is always one tap away. We left out a biometric prompt and a long survey. Neither protects the traveler from a wrong decision, and the reason question is optional, sent as code 0 when skipped. The confirmation screen says the booking is cancelled and a refund is on its way, but gives no number of days, because Agoda's documentation does not say when the traveler's money comes back under Partner Fulfillment.
 
-## Risks & open questions
-- Exact Agoda cancellation **REST paths** and a **refund-status/webhook** channel are
-  assumed and must be confirmed against the live partner docs.
-- **Non-refundable** bookings are a satisfaction cliff, travel-credit as an alternative is
-  the most valuable fast-follow.
-- **Timezone correctness** on the deadline (hotel local time) is a common, costly bug class.
+## Exceptions
 
-*Supporting docs:* [PRD](./product-requirements.md) · [Assumptions](./assumptions.md) ·
-[API integration](./api-integration.md) · [IA](../flows/information-architecture.md) ·
-[Flowchart](../flows/cancellation-flow.mmd) · [Wireframe notes](../wireframes/design-notes.md)
+A refund of zero is not the same as a booking that cannot be cancelled. A non-refundable rate can still be cancelled through the API; the traveler gets nothing back, and the screen says so before Continue. Separately, the date after which the API refuses a cancellation is not the date a penalty starts. The two Agoda pages we read give different boundaries for that cutoff: one day before check-in in the cancellation guide, and midnight at the start of the check-in date in the certification guide. Until Agoda confirms, version 1 sends anything close to check-in to support.
+
+Both Preview and Confirm can take up to 120 seconds, so each has its own waiting screen that blocks a second tap. If Confirm times out, we do not know whether it went through, so the backend reads Booking Detail first and asks for a fresh Preview only if the booking is still active. If Agoda rejects Confirm because the refund no longer matches the quote (the documented example is error 914), the app shows the new amount and asks again. Authentication and permission errors are logged and never shown to the traveler as codes.
+
+Fee waiver is a separate path, offered only when Booking Detail shows isFeeWaiverAllowed and Voya's account has permission. The traveler asks, the hotel decides, and Voya checks Booking Detail for the answer for up to 72 hours, but not past check-in. The screens never promise a waiver. The documentation lists different reason values and statuses in two places, so we mark them for validation.
+
+## Assumptions and trade-offs
+
+In the examples Voya refunds the traveler the amount Agoda quotes, which assumes the traveler paid what Agoda charges Voya. A markup, coupon, currency conversion or gateway fee would break that and needs a business decision. Returning money to the traveler is the payment gateway's job, so the app tracks booking status and refund status separately. Reading Booking Detail after every Confirm adds a call and slows the result screen a little; we accept that to avoid showing a cancellation that did not happen.
+
+## What to measure after launch
+
+We would track the share of eligible bookings cancelled in the app, the drop-off between seeing a quote and confirming, Preview and Confirm timeout and error rates, the time to show the first quote, the share of cancellations that go to support, and refund questions after cancellation. We have no baseline for any of these yet.
+
+## Still to confirm with Agoda
+
+Our account permissions for Preview, Confirm and fee waiver; the exact cancellation cutoff; the fee-waiver reason values and status names; how and when the traveler's refund settles; and who at Voya owns manual cancellations.

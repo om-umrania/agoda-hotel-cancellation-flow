@@ -1,145 +1,30 @@
-# Agoda Partner (Demand) API, Reference Notes
+# Agoda Demand API: reference notes
 
-> Grounding for the Developer / API-usage notes in this assignment.
-> Each fact is tagged **[DOCUMENTED]** (found in Agoda's public Demand docs) or
-> **[INFERRED]** (our reasonable assumption, since the full partner docs sit behind
-> a login). The assignment permits assumptions as long as they are stated, see
-> [`docs/assumptions.md`](../docs/assumptions.md).
+Notes behind the Developer (API) notes in the deck. Tags: **[D]** documented on the Agoda page named, **[A]** Voya assumption, **[V]** unclear or undocumented. Agoda's Demand documentation is at https://developer.agoda.com/demand/ (the older `partners.agoda.com/DeveloperPortal` links in the assignment redirect there). Pages we read: getting-started, cancel-bookings, fee-waiver-cancellation, retrieve-bookings (Booking List and Booking Detail), json-search-api, json-book-api, post-booking-api, appendix, best-practices-certification-process.
 
-Agoda migrated its partner docs from `partners.agoda.com/DeveloperPortal` (the URL
-printed on the assignment) to **developer.agoda.com/demand**. The old links now
-301-redirect there. An OpenAPI / doc index is published at
-`developer.pps.agoda.com/llms.txt`.
+## Integration models [D, getting-started]
+- Online Affiliates / MSE: search only.
+- Agoda Fulfill Assisted: Agoda handles payment and post-booking service.
+- Partner Fulfillment: the partner handles payment and post-booking service. Voya is assumed to be here [A].
 
----
+## Authentication [D]
+`Authorization: siteId:apikey` or OAuth 2.0. Invalid or missing credentials return error 108; IP restriction violations return HTTP 401; the certification guide requires partner server IPs to be on Agoda's allow list.
 
-## 1. API families & integration models
+## APIs used for cancellation
+| API | Use | Notes |
+|---|---|---|
+| Search (JSON) | Policy snapshot at booking | `features.extra` can include `cancellationDetail`. Response `cancellationPolicy {code, cancellationText, parameter[], date[]}`, `freeCancellation`, `propertyUtcOffset`; times are hotel-local [D] |
+| Book | Create the booking | Returns `id`, `itineraryID`, `selfService`, `processing`. Partner `tag` lets you find a booking after a timeout [D] |
+| Booking List | Find bookings by recent window or tag | Reconciliation, not My trips [D] |
+| Booking Detail | Status and text policy | Up to 40 ids per call. `status`, `cancellationPolicy` (text), `isFeeWaiverAllowed`, `feeWaiverStatus`, `hotelConfirmationNumber` [D] |
+| Cancel Preview | Quote | `{bookingId}` in; `cancellationSummary {bookingId, reference, cancellationPolicy[], paymentRate[], refundRate[]}` out. Up to 120 s [D] |
+| Cancel Confirm | Cancel | `{bookingId, reference, cancelReason, remark?, refundRate{currency, inclusive}}`; HTTP 200 empty body on success. Up to 120 s [D] |
+| Confirm with `requestingFeeWaiver` | Fee waiver | `feeWaiverReason`, `remark`; the hotel decides [D] |
 
-**[DOCUMENTED]** The B2B product is the **Agoda Demand API** (a.k.a. the Affiliate /
-Connectivity API). Its core APIs:
+Booking statuses listed: BookingReceived, BookingCharged, BookingConfirmed, Departed, BookingRejected, BookingCancelled, BookingCancelledByCustomer, BookingTest, TechnicalError, AllotmentAlert [D, Appendix].
 
-| API | Purpose |
-|---|---|
-| **Content API** | Static property content, names, images, descriptions, amenities, address |
-| **Search API** (+ Search API 2.0) | Live availability, rates, and **cancellation policy** per offer |
-| **Pre-check API** | Re-validates rate, price and policy immediately before booking |
-| **Book API** | Creates a booking → returns a `bookingId` |
-| **Post-Book API** | **Retrieve / Amend / Cancel** existing bookings |
-| **Cancellation API** | The dedicated two-step cancel flow (Preview → Confirm) |
-| **Special Requests API** | Guest requests attached to a booking |
+## Cancellation boundary [V]
+The cancellation guide says cancellation is allowed up to one day before check-in. The certification guide describes a cutoff of 12:00 AM on the check-in date in hotel-local time. We keep the date a penalty starts (a Voya fixture, Mon 7 Dec 2026, 6:00 PM) separate from the API cutoff, and treat anything near check-in as an assisted case.
 
-**[DOCUMENTED]** Three integration models:
-
-1. **Online Affiliates / MSE**, Search only (price comparison / meta).
-2. **Agoda Fulfill-Assisted**, Search + Book; **Agoda** handles payment & post-booking.
-3. **Partner Fulfillment**, Search + Book + Post-Book; the **partner** owns payment
-   and customer service, **including cancellations**.
-
-> **Our product (Voya) uses the Partner Fulfillment model**, this is why we own the
-> in-app cancellation experience and surface the refund ourselves. *(Stated assumption.)*
-
-**[DOCUMENTED]** Portals: `developer.agoda.com/demand` (demand/affiliate),
-`developer.agoda.com/supply` (hotel supply / YCS). `ycs.agoda.com` (Yield Control
-System) is the hotelier extranet, a different product. `affiliates.agoda.com` is the
-marketing link-affiliate program (deep links + a `cid`), distinct from the booking API.
-**[INFERRED]** The informal "Long Tail" name refers to that marketing link program; it
-is not a booking-API endpoint.
-
----
-
-## 2. Authentication
-
-**[DOCUMENTED]** Two methods, **API-Key** (legacy) and **OAuth 2.0** (recommended).
-Auth headers are mandatory on every request.
-
-- **API-Key:** single header `Authorization: <Site-ID>:<API-Key>`
-  (e.g. `Authorization: 123456:00000000-0000-0000-0000-000000000000`),
-  plus `Content-Type: application/json`.
-  Site ID + API Key must **also** appear inside the request body.
-  **IP whitelisting is required.** Invalid/missing credentials → **error code 108**.
-  API-Key auth is slated for deprecation (~end 2026) in favour of OAuth bearer tokens.
-- **OAuth 2.0:** bearer token on the `Authorization` header (recommended for new builds).
-- **[DOCUMENTED]** Separate **Sandbox** and **Live** environments; site credentials are
-  issued on partner approval.
-- **[INFERRED]** The marketing-affiliate side uses a **`cid`** (campaign/site ID), which
-  is *not* the booking-API Site-ID, worth distinguishing.
-
----
-
-## 3. Booking lifecycle (field names [DOCUMENTED]; exact REST paths [INFERRED], as they
-live in the interactive OpenAPI explorer)
-
-### Search (availability + policy)
-- Request: `criteria { propertyIds[≤100], checkIn, checkOut, rooms, adults, children,
-  language, currency, userCountry }`, `features { ratesPerProperty, extra }`.
-- Response (per offer): `roomId, blockId, ratePlanId, rate{inclusive,exclusive},
-  totalPayment, perRoomPerNightRate, dailyRate`, plus `cancellationPolicy` +
-  `freeCancellation`.
-
-### Pre-check
-- **[DOCUMENTED it exists]**, validates rate/availability/price/policy just before Book.
-  Field schema not public → **[INFERRED]**.
-
-### Book
-- Submit guest + payment details → returns a `bookingId`.
-
-### Retrieve Booking (Post-Book)
-- Returns booking **status + details** (used to render "My Trips" / Booking Details and
-  to check status before cancelling).
-
-### Cancellation, **two-step** [DOCUMENTED]
-1. **Preview / Estimate**, request `{ bookingId (long) }` →
-   `cancellationSummary { bookingId, reference (int), cancellationPolicy[] (policyText
-   by language), paymentRate[], refundRate[] }`, each rate has a currency + `inclusive`
-   amount. *(This is what powers the in-app refund-preview screen.)*
-2. **Confirm**, request `{ bookingId, reference, cancelReason (int code 0–44, e.g.
-   0 = None, 44 = Natural disaster), refundRate { currency, inclusive }, remark? (string) }`
-   → **HTTP 200, empty body**. Errors return `errorMessage { id, subId, message }`.
-
-- **Response SLA ≈ 120 s.**
-- Cancellations allowed **up to 1 day before check-in**; on/after check-in needs manual
-  escalation.
-- A **Fee Waiver Cancellation** flow exists for special cases (e.g. disaster, duplicate).
-
-> The `reference` returned by **Preview** must be passed to **Confirm**, it binds the
-> confirmation to the exact refund the user was shown, and doubles as an anti-double-cancel
-> guard (we also attach our own idempotency key, *stated assumption*).
-
----
-
-## 4. Cancellation-policy data model (from Search / Retrieve)
-
-**[DOCUMENTED]**
-- `freeCancellation`, boolean.
-- `cancellationPolicy.code`, policy-format code.
-- `cancellationPolicy.cancellationText`, human-readable
-  (e.g. *"You can cancel until November 27, 2021 and pay nothing!"*).
-- `cancellationPolicy.parameter`, penalty tiers: `days`, `charge` (type), `value`.
-- `cancellationPolicy.date`, datetime refund thresholds, each with a `rate` amount.
-- Non-refundable is encoded as *"365 Days with 100 Percent"*.
-
-**[INFERRED]** Agoda exposes the *pieces* rather than one tidy `refundableAmount`. The app
-should derive the free-cancellation **deadline timestamp** and the **refundable amount** for
-the UI from `cancellationPolicy.date[].rate` + `paymentRate` / `refundRate`. Safest to treat
-the exact refund as **server-authoritative** (from the Cancellation Preview call), never
-computed on the client.
-
----
-
-## 5. What we treat as an assumption in this project
-
-- Exact REST paths / hosts for each endpoint (docs expose them via the OpenAPI explorer only).
-- Pre-check request/response schema (`developer.pps.agoda.com/docs/pre-check-api.md` → 404).
-- A refund-**status** / webhook channel (`booking.cancelled`, `refund.completed`) for the
-  async refund timeline, modelled on standard payment-settlement practice.
-- Our own idempotency key on Confirm, and our mapping of Agoda `errorMessage` → user copy.
-
----
-
-## Sources
-- https://developer.agoda.com/demand/docs/getting-started
-- https://developer.pps.agoda.com/docs/api-key.md
-- https://developer.agoda.com/demand/docs/cancel-bookings  (+ `.../fee-waiver-cancellation`)
-- https://developer.agoda.com/demand/docs/json-search-api
-- https://developer.pps.agoda.com/llms.txt  (OpenAPI / doc index)
-- Assignment brief links (now redirecting): `partners.agoda.com/DeveloperPortal/APIDoc/GettingStarted`, `.../SearchAPI`
+## Not documented, so not claimed
+A cancellation or refund webhook, a refund-status endpoint, an `Idempotency-Key` header, a refund timing for the traveler, and `PENDING`, `cancellationId` or an ETA in the standard Confirm response.

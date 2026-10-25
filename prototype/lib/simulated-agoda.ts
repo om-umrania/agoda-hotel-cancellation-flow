@@ -8,8 +8,8 @@ export type Sim = { previews?: number; confirmed?: "accepted" | "unknown"; waive
 type AgodaError = { errorMessage: { id: number; subId: number; message: string } };
 
 export function cancelPreview(f: Fixture, body: { bookingId: number }, sim: Sim): AgodaError | { cancellationSummary: unknown } {
-  if (body.bookingId !== f.bookingId) return { errorMessage: { id: 910, subId: 0, message: "Booking not found (simulated)" } };
-  if (f.previewFault === "error") return { errorMessage: { id: 500, subId: 0, message: "Temporary error (simulated)" } };
+  if (body.bookingId !== f.bookingId) return { errorMessage: { id: 0, subId: 0, message: "Booking not found (simulated, not an Agoda code)" } };
+  if (f.previewFault === "error") return { errorMessage: { id: 0, subId: 0, message: "Temporary error (simulated, not an Agoda code)" } };
   const refund = f.confirmFault === "mismatch914" && (sim.previews ?? 0) >= 1 ? f.refundAfterMismatch ?? f.refund : f.refund;
   return {
     cancellationSummary: {
@@ -30,12 +30,12 @@ export type ConfirmBody = {
 
 // Returns "ok" (HTTP 200, empty body), "no-response" (nothing comes back in time), or an error.
 export function cancelConfirm(f: Fixture, b: ConfirmBody): "ok" | "no-response" | AgodaError {
-  if (b.bookingId !== f.bookingId) return { errorMessage: { id: 910, subId: 0, message: "Booking not found (simulated)" } };
-  if (b.reference !== f.reference) return { errorMessage: { id: 913, subId: 0, message: "Reference not valid (simulated)" } };
+  if (b.bookingId !== f.bookingId) return { errorMessage: { id: 0, subId: 0, message: "Booking not found (simulated, not an Agoda code)" } };
+  if (b.reference !== f.reference) return { errorMessage: { id: 0, subId: 0, message: "Reference does not match the last Preview (simulated, not an Agoda code)" } };
   const current = f.confirmFault === "mismatch914" ? f.refundAfterMismatch ?? f.refund : f.refund; // the quote moved after it was shown
   if (!b.refundRate || b.refundRate.currency !== f.currency || b.refundRate.inclusive !== current)
-    return { errorMessage: { id: 914, subId: 0, message: "Refund amount does not match the current quote (simulated)" } };
-  if (b.requestingFeeWaiver && !f.isFeeWaiverAllowed) return { errorMessage: { id: 924, subId: 0, message: "Fee waiver not allowed (simulated)" } };
+    return { errorMessage: { id: 914, subId: 0, message: "Refund does not match the current quote (simulated message; 914 is the code in Agoda's example)" } };
+  if (b.requestingFeeWaiver && !f.isFeeWaiverAllowed) return { errorMessage: { id: 924, subId: 0, message: "Fee waiver not allowed for this site (simulated message)" } };
   if (f.confirmFault === "timeout") return "no-response";
   return "ok";
 }

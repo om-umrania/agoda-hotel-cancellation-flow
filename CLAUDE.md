@@ -1,22 +1,21 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) in this repository.
 
 ## Project
 
-Product-design project (Masters' Union, Product Management track): an end-to-end design of a **hotel booking cancellation experience** for an Android app built on **Agoda APIs**. Scope spans user flows, wireframes, information architecture, API integration, and product documentation.
+PM101 Mid-Course case at Masters' Union: Android hotel-cancellation flow for "Voya", built on Agoda's Demand API. Deliverables are a 13-page PDF (11 core pages and a 2-page product note), wireframe PNGs, flow diagrams, supporting docs, and an interactive prototype that uses simulated Agoda responses.
 
-## Current state
+## Layout
 
-The repository is greenfield — it currently contains only `README.md` and an initial commit. There is **no application code, build system, test suite, or lint config yet**, so there are no build/test/run commands to document. As the project takes shape (deliverables, prototype code, or an Android implementation), update this file with:
+- `presentation/src/` generates the deck: `build.py` writes `presentation/deck.html`, `render.py` prints `presentation/final-submission.pdf` with Playwright, `export_screens.py` and `export_diagrams.py` write `wireframes/screens/` and `flows/*.png`. Screens and per-wireframe notes live in `screens.py`; diagrams in `diagrams.py`; the product note in `note.py`. Run in that order after any change.
+- `prototype/` is a Next.js app (`npm run dev`, `npm run build`, `npx eslint .`). Simulated Agoda logic is in `lib/simulated-agoda.ts`; fixtures in `lib/fixtures.ts`.
+- `docs/`, `flows/`, `wireframes/design-notes.md`, `references/` hold the written material. `docs/solutions/` holds documented solutions to past problems, such as the Vercel subdirectory deploy.
 
-- The actual build / test / lint / run commands once tooling is chosen.
-- The high-level architecture (flow boundaries, API integration layer, screen/IA structure) once more than one file is involved.
+## Rules that matter
 
-Do not assume a stack or scaffold tooling without confirming the intended direction first — this is a product-design repo, and some deliverables may be documents or design artifacts rather than runnable code.
-
-## Working notes
-
-- Default branch is `main`. An additional branch `om-umrania/snakehead` exists on the remote.
-- Any Agoda API work should treat credentials/keys as secrets — keep them out of commits and source.
-- `docs/solutions/` holds documented solutions to past problems (e.g. the Vercel deploy gotcha), organized by category with YAML frontmatter (`problem_type`, `component`, `tags`). Relevant when deploying or debugging in a documented area.
+- Evidence tags: [D] documented by Agoda, [A] Voya assumption, [V] needs validation. Do not state undocumented Agoda behavior as fact.
+- Standard Confirm returns HTTP 200 with an empty body. Do not add `status`, `PENDING`, `cancellationId`, refund ETAs, webhooks or an `Idempotency-Key` header.
+- Keep Agoda site IDs, API keys and any real guest data out of commits and source.
+- Example dates must stay consistent: demo Sun 25 Oct 2026; stay Thu 10 Dec to Sat 12 Dec 2026; penalty cutoff Mon 7 Dec 2026, 6:00 PM hotel time.
+- Default branch is `main`. Vercel deploys from `prototype/` (see `docs/solutions/`).
