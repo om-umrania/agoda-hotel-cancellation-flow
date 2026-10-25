@@ -55,4 +55,4 @@ The deck is a self-contained HTML file. To re-export PNGs + PDF, a Playwright re
 used (kept outside the repo). Or simply open `presentation/deck.html` and print to PDF.
 
 ---
-*Team: Member 1–5 · Group X (replace with real names on the cover before submitting).*
+*Team: Om Umrania · Param Parekh · Shabareesh Parlakota · Arushi Gupta · Manya Mahajan.*
