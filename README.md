@@ -7,6 +7,11 @@ information architecture, flowchart, annotated wireframes, API integration, and 
 > **One promise to the traveller: no surprises about the refund.** The refund shown is the
 > refund paid — it's always Agoda's number, surfaced before the user commits.
 
+## 🔴 Live interactive prototype
+**→ https://agoda-cancellation-flow.vercel.app** — Next.js app: toggle **wireframe ⇄ hi-fi**,
+walk the full 7-screen flow, switch between 12 scenarios, and browse **55 corner cases**
+(tap *▶ demo* to load one into the phone). Source in [`prototype/`](prototype/).
+
 ## 📦 Submission
 
 **→ [`presentation/final-submission.pdf`](presentation/final-submission.pdf)** — the graded deck
@@ -29,7 +34,7 @@ Built from [`presentation/deck.html`](presentation/deck.html) (open in a browser
 | `wireframes/screens/*.png` | Rendered mobile wireframes (8 screens) |
 | `references/agoda-api-documentation.md` | Grounded Agoda API research + sources |
 | `presentation/` | The deck (`deck.html`) + the submission PDF |
-| `prototype/` | **Interactive Next.js app** (Phase 2 — see below) |
+| `prototype/` | **Interactive Next.js app** → [live on Vercel](https://agoda-cancellation-flow.vercel.app) (`cd prototype && npm i && npm run dev`) |
 
 ## 🧭 The flow (7 screens)
 My Trips → Booking Details → **Refund Preview** (the make-or-break screen) → Confirm + re-auth
