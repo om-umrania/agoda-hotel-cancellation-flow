@@ -19,3 +19,4 @@ Do not assume a stack or scaffold tooling without confirming the intended direct
 
 - Default branch is `main`. An additional branch `om-umrania/snakehead` exists on the remote.
 - Any Agoda API work should treat credentials/keys as secrets — keep them out of commits and source.
+- `docs/solutions/` holds documented solutions to past problems (e.g. the Vercel deploy gotcha), organized by category with YAML frontmatter (`problem_type`, `component`, `tags`). Relevant when deploying or debugging in a documented area.
