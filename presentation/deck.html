@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agoda Cancellation Flow</title>
+<meta name="description" content="PM101 case: an Android hotel-cancellation flow for Voya, powered by Agoda's Demand API — IA, flowchart, annotated wireframes and product note.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0F1B2D; --ink-soft:#51607A; --ink-faint:#8C97A8;
+  --paper:#EEF2F9; --surface:#FFFFFF; --surface-2:#F6F8FC; --line:#DCE3EF;
+  --blue:#1E4FA3; --blue-deep:#143872; --blue-rgb:30,79,163;
+  --sky:#3E8EF7; --orange:#F58220; --orange-soft:#FFEDDC;
+  --green:#1FA971; --green-soft:#E4F6EE; --amber:#E0912F; --amber-soft:#FBF0DD;
+  --red:#E0564B; --red-soft:#FBEAE8;
+  --design:#7A5BE6; --dev:#1E4FA3; --biz:#0E9F8E;
+  --shadow:0 1px 2px rgba(15,27,45,.04), 0 10px 30px rgba(15,27,45,.07);
+  --shadow-lg:0 20px 60px rgba(15,27,45,.14);
+  --radius:18px; --radius-sm:12px;
+  --font:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --hand:'Caveat',cursive;
+}
+:root:not([data-theme="light"]) :root, :root[data-theme="dark"]{ color-scheme:dark; }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#EAF0FA; --ink-soft:#A7B4C8; --ink-faint:#71809A;
+    --paper:#0A0F18; --surface:#121a28; --surface-2:#0F1725; --line:#243247;
+    --blue:#6FA3FF; --blue-deep:#9DC0FF; --blue-rgb:111,163,255;
+    --sky:#6FA3FF; --orange:#FFA54D; --orange-soft:#33240f;
+    --green:#49C892; --green-soft:#10261c; --amber:#E9B567; --amber-soft:#2a2110;
+    --red:#F0786E; --red-soft:#2c1512;
+    --design:#A98BFF; --dev:#6FA3FF; --biz:#39C4B2;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
+    --shadow-lg:0 20px 60px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ink:#EAF0FA; --ink-soft:#A7B4C8; --ink-faint:#71809A;
+  --paper:#0A0F18; --surface:#121a28; --surface-2:#0F1725; --line:#243247;
+  --blue:#6FA3FF; --blue-deep:#9DC0FF; --blue-rgb:111,163,255;
+  --sky:#6FA3FF; --orange:#FFA54D; --orange-soft:#33240f;
+  --green:#49C892; --green-soft:#10261c; --amber:#E9B567; --amber-soft:#2a2110;
+  --red:#F0786E; --red-soft:#2c1512;
+  --design:#A98BFF; --dev:#6FA3FF; --biz:#39C4B2;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--paper);color:var(--ink);line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:var(--blue);text-decoration:none}
+
+/* fixed chrome */
+.topbar{position:fixed;inset:0 0 auto 0;height:4px;z-index:60;background:transparent}
+.topbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--orange));transition:width .25s ease}
+.hud{position:fixed;right:16px;top:16px;z-index:60;display:flex;gap:8px;align-items:center}
+.hud button{font-family:var(--font);font-size:12px;font-weight:600;color:var(--ink-soft);
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 12px;
+  cursor:pointer;box-shadow:var(--shadow);display:inline-flex;gap:6px;align-items:center}
+.hud button:hover{color:var(--ink);border-color:var(--blue)}
+.counter{position:fixed;left:16px;bottom:14px;z-index:60;font:600 12px/1 var(--mono);
+  color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);
+  border-radius:999px;padding:7px 11px;box-shadow:var(--shadow)}
+.navhint{position:fixed;right:16px;bottom:14px;z-index:60;font-size:11px;color:var(--ink-faint);
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 11px;box-shadow:var(--shadow)}
+
+/* deck + slides */
+.deck{scroll-snap-type:y proximity}
+.slide{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:64px 40px;scroll-snap-align:start;position:relative;border-bottom:1px solid var(--line)}
+.slide-inner{width:100%;max-width:1120px;margin:0 auto;position:relative;z-index:2}
+.slide-no{position:absolute;top:22px;left:40px;font:700 12px/1 var(--mono);color:var(--ink-faint);
+  letter-spacing:.14em;z-index:3}
+.slide-no b{color:var(--orange)}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font:700 12px/1 var(--mono);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--blue);margin-bottom:18px}
+.eyebrow::before{content:"";width:22px;height:2px;background:var(--orange);border-radius:2px}
+h1{font-size:clamp(34px,5.4vw,60px);font-weight:900;letter-spacing:-.025em;line-height:1.02}
+h2{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:-.02em;line-height:1.08}
+h3{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.lead{font-size:clamp(16px,1.7vw,20px);color:var(--ink-soft);max-width:60ch;margin-top:14px}
+.muted{color:var(--ink-soft)} .small{font-size:13px} .mono{font-family:var(--mono)}
+.hand{font-family:var(--hand);font-size:24px;color:var(--orange);line-height:1}
+.hr{height:1px;background:var(--line);border:0;margin:20px 0}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* generic blocks */
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow)}
+.card h3{margin-bottom:6px}
+.tag{display:inline-flex;align-items:center;gap:6px;font:700 11px/1 var(--mono);letter-spacing:.08em;
+  text-transform:uppercase;padding:5px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink-soft)}
+.tag.doc{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent);background:var(--green-soft)}
+.tag.inf{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 40%,transparent);background:var(--amber-soft)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;box-shadow:var(--shadow)}
+.kpi .n{font:800 15px/1.1 var(--font);color:var(--blue);display:flex;gap:8px;align-items:center}
+.kpi .d{font-size:12.5px;color:var(--ink-soft);margin-top:7px}
+.kpi .ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--orange-soft);color:var(--orange);font-size:14px;flex:0 0 auto}
+
+/* assumptions */
+.alist{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+.alist .it{display:flex;gap:11px;align-items:flex-start;font-size:14px}
+.alist .k{flex:0 0 auto;width:24px;height:24px;border-radius:7px;background:var(--blue);color:#fff;
+  font:700 12px/24px var(--mono);text-align:center}
+.alist .it b{color:var(--ink)}
+.alist .it span{color:var(--ink-soft)}
+
+/* API */
+.apitable{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
+.apitable th,.apitable td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.apitable th{background:var(--surface-2);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.apitable tr:last-child td{border-bottom:0}
+.apitable td.m{font-family:var(--mono);color:var(--blue);white-space:nowrap}
+code,.code{font-family:var(--mono);font-size:12.5px}
+.codeblock{background:var(--blue-deep);color:#D8E6FF;border-radius:var(--radius-sm);padding:14px 16px;
+  font-family:var(--mono);font-size:12px;line-height:1.6;overflow:auto;border:1px solid rgba(255,255,255,.08)}
+.codeblock .c{color:#7FA8E6} .codeblock .k{color:#FFC08A} .codeblock .s{color:#8FE3B8}
+
+/* flow */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:4px 0 14px;font-size:12.5px;color:var(--ink-soft)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+/* custom flow map */
+.flowmap{display:flex;flex-direction:column;gap:11px;margin-top:8px}
+.frow{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap}
+.fstep{flex:1;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--ink-soft);
+  border-radius:12px;padding:11px 12px 10px;position:relative;box-shadow:var(--shadow);min-width:0}
+.fstep .fn{position:absolute;top:-11px;left:11px;width:21px;height:21px;border-radius:50%;background:var(--ink);
+  color:#fff;font:800 11px/21px var(--mono);text-align:center}
+.fstep .ft{font-size:12.5px;font-weight:800;color:var(--ink);line-height:1.18;margin-top:5px}
+.fstep .fapi{font:600 9.5px/1.3 var(--mono);letter-spacing:.02em;color:var(--ink-soft);margin-top:5px;text-transform:uppercase}
+.fstep .fa{display:inline-flex;align-items:center;gap:5px}
+.fstep .fa::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.fstep.user{border-top-color:var(--blue)} .fstep.user .fapi{color:var(--blue)}
+.fstep.ag{border-top-color:var(--green)} .fstep.ag .fapi{color:var(--green)}
+.fstep.be{border-top-color:var(--orange)} .fstep.be .fapi{color:var(--orange)}
+.fstep.de{border-top-color:var(--ink-soft);background:var(--surface-2)}
+.fstep.de .ft::before{content:"◇ ";color:var(--ink-soft)}
+.fstep.ok{border-top-color:var(--green);background:var(--green-soft)}
+.farr{display:flex;align-items:center;justify-content:center;width:24px;flex:0 0 auto;color:var(--ink-faint)}
+.farr svg{width:18px;height:12px}
+.farr .ln{stroke:var(--ink-faint);stroke-width:2;stroke-dasharray:4 3;animation:march 1s linear infinite}
+@keyframes march{to{stroke-dashoffset:-14}}
+.fwrap{display:flex;justify-content:flex-end;align-items:center;gap:7px;color:var(--ink-faint);font:600 10px/1 var(--mono);padding-right:6px}
+.fexits{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.fexit{border:1px dashed var(--line);border-radius:10px;padding:9px 11px;font-size:11.5px;color:var(--ink-soft);background:var(--surface)}
+.fexit b{color:var(--ink)}
+.fexit.stop{border-color:color-mix(in srgb,var(--red) 45%,transparent);background:var(--red-soft)}
+.fexit.stop b{color:var(--red)}
+.fexit.warn{border-color:color-mix(in srgb,var(--amber) 45%,transparent);background:var(--amber-soft)}
+.fexit.warn b{color:var(--amber)}
+.fexit.ok{border-color:color-mix(in srgb,var(--green) 45%,transparent);background:var(--green-soft)}
+.fexit.ok b{color:var(--green)}
+
+/* IA tree */
+.tree{font-family:var(--mono);font-size:12.5px;line-height:1.75;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);
+  color:var(--ink-soft);white-space:pre;overflow:auto}
+.tree b{color:var(--ink)} .tree .hi{color:var(--orange);font-weight:700} .tree .bl{color:var(--blue);font-weight:700}
+
+/* ===== PHONE WIREFRAMES ===== */
+.wf-slide .slide-inner{max-width:1180px}
+.wf-grid{display:grid;grid-template-columns:auto 1fr;gap:34px;align-items:start}
+.phones{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.phonewrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.phonewrap .cap{font:700 11px/1 var(--mono);letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase}
+.phone{width:258px;background:#0b1320;border-radius:34px;padding:9px;box-shadow:var(--shadow-lg);flex:0 0 auto}
+.scr{background:var(--surface-2);border-radius:26px;overflow:hidden;height:530px;display:flex;flex-direction:column;position:relative;border:1px solid rgba(0,0,0,.06)}
+.statusbar{height:26px;background:var(--blue-deep);color:#cfe0ff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font:600 10px/1 var(--mono)}
+.statusbar .notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:62px;height:5px;border-radius:3px;background:#0b1320}
+.appbar{background:var(--blue);color:#fff;padding:11px 14px;display:flex;align-items:center;gap:10px}
+.appbar .bk{font-size:15px;opacity:.9}
+.appbar .ttl{font-weight:700;font-size:14px}
+.appbar .sp{margin-left:auto;opacity:.85;font-size:13px}
+.body{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface-2)}
+.ctabar{padding:10px 12px;background:var(--surface);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:7px}
+.botnav{height:46px;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;color:var(--ink-faint);font-size:9px}
+.botnav .bn{display:flex;flex-direction:column;align-items:center;gap:2px}
+.botnav .bn.on{color:var(--blue)} .botnav .bn .ic{font-size:14px}
+
+/* wireframe primitives */
+.wb{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.wl{height:8px;background:#e7ecf4;border-radius:4px}
+.wl.s{height:7px;width:60%} .wl.xs{height:6px;width:40%} .wl.lg{height:10px}
+.wtxt{font-size:11px;color:var(--ink-soft);line-height:1.35}
+.wtxt.b{color:var(--ink);font-weight:700;font-size:12px}
+.wh{font-size:13px;font-weight:800;color:var(--ink)}
+.wrow{display:flex;gap:8px;align-items:center}
+.wrow.sb{justify-content:space-between}
+.wimg{background:linear-gradient(135deg,#d6e0f0,#eef3fb);border-radius:9px;position:relative;overflow:hidden;flex:0 0 auto}
+.wimg::after{content:"";position:absolute;inset:0;background:
+  linear-gradient(45deg,transparent 46%,rgba(30,79,163,.18) 47% 53%,transparent 54%),
+  linear-gradient(-45deg,transparent 46%,rgba(30,79,163,.18) 47% 53%,transparent 54%)}
+.wchip{font:700 9.5px/1 var(--mono);letter-spacing:.04em;padding:4px 7px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-soft);text-transform:uppercase}
+.wchip.ok{background:var(--green-soft);color:var(--green);border-color:color-mix(in srgb,var(--green) 35%,transparent)}
+.wchip.warn{background:var(--amber-soft);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 35%,transparent)}
+.wchip.bad{background:var(--red-soft);color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
+.wchip.bl{background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);border-color:color-mix(in srgb,var(--blue) 30%,transparent)}
+.wbtn{border-radius:10px;padding:10px;text-align:center;font-weight:800;font-size:12.5px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.wbtn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
+.wbtn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.wbtn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.wbtn.ghost{background:transparent}
+.wseg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px}
+.wseg div{flex:1;text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-faint);padding:6px;border-radius:7px}
+.wseg div.on{background:#fff;color:var(--blue);box-shadow:var(--shadow)}
+.wfield{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:11px;color:var(--ink-faint);background:#fff;display:flex;align-items:center;gap:8px}
+.wnum{display:flex;flex-direction:column;gap:5px;background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:10px}
+.wnum .r{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-soft)}
+.wnum .r.tot{font-weight:800;font-size:14px;color:var(--ink);border-top:1px solid var(--line);padding-top:6px}
+.wnum .r.tot b{color:var(--green)}
+.ring{--p:62;width:40px;height:40px;border-radius:50%;flex:0 0 auto;
+  background:conic-gradient(var(--orange) calc(var(--p)*1%), var(--line) 0);display:grid;place-items:center;position:relative}
+.ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--surface)}
+.ring span{position:relative;font:800 9px/1 var(--mono);color:var(--orange)}
+.bio{width:52px;height:52px;border-radius:50%;border:2px solid var(--blue);display:grid;place-items:center;color:var(--blue);font-size:22px;margin:4px auto}
+.spin{width:40px;height:40px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--orange);margin:6px auto;animation:spin 1s linear infinite}
+.check{width:54px;height:54px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:28px;margin:4px auto}
+.center{align-items:center;justify-content:center;text-align:center}
+
+/* lenses */
+.lenses{display:grid;gap:12px}
+.lens{border:1px solid var(--line);border-left-width:4px;border-radius:12px;padding:13px 15px;background:var(--surface);box-shadow:var(--shadow)}
+.lens h4{font:800 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.lens p{font-size:12.8px;color:var(--ink-soft);line-height:1.5}
+.lens.design{border-left-color:var(--design)} .lens.design h4{color:var(--design)}
+.lens.dev{border-left-color:var(--dev)} .lens.dev h4{color:var(--dev)}
+.lens.biz{border-left-color:var(--biz)} .lens.biz h4{color:var(--biz)}
+.lens .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px}
+.lens.design .ic{background:color-mix(in srgb,var(--design) 15%,transparent)}
+.lens.dev .ic{background:color-mix(in srgb,var(--dev) 15%,transparent)}
+.lens.biz .ic{background:color-mix(in srgb,var(--biz) 15%,transparent)}
+.lens code{color:var(--blue);background:var(--surface-2);padding:1px 4px;border-radius:4px;font-size:11.5px}
+
+/* branches */
+.branches{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.branch{border:1px solid var(--line);border-top-width:4px;border-radius:12px;padding:9px 11px;background:var(--surface);box-shadow:var(--shadow)}
+.branch h4{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:7px}
+.branch .amt{font:800 15px/1 var(--font);margin:3px 0}
+.branch p{font-size:11px;color:var(--ink-soft);line-height:1.4}
+.branch.free{border-top-color:var(--green)} .branch.free .amt{color:var(--green)}
+.branch.partial{border-top-color:var(--amber)} .branch.partial .amt{color:var(--amber)}
+.branch.nonref{border-top-color:var(--red)} .branch.nonref .amt{color:var(--red)}
+
+/* edge grid */
+.edge{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.mini .top{padding:9px 11px;font:800 11px/1.2 var(--font);color:#fff;display:flex;align-items:center;gap:7px}
+.mini.e1 .top{background:var(--red)} .mini.e2 .top{background:var(--ink-soft)}
+.mini.e3 .top{background:var(--amber)} .mini.e4 .top{background:var(--blue)}
+.mini .in{padding:12px;display:flex;flex-direction:column;gap:8px;min-height:150px}
+
+/* cover */
+.cover{background:radial-gradient(1200px 600px at 78% -10%,rgba(245,130,32,.14),transparent 60%),
+  radial-gradient(900px 600px at 10% 110%,rgba(30,79,163,.16),transparent 55%);overflow:hidden}
+.cover .lines{position:absolute;inset:0;z-index:1;opacity:.5}
+.cover .lines i{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--line) 20% 80%,transparent)}
+.cover-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);
+  border-radius:999px;padding:8px 14px;box-shadow:var(--shadow);font-weight:700;font-size:13px}
+.badge .b{width:22px;height:22px;border-radius:6px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900}
+.credits{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.credits .m{font-size:12.5px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.cover .phone{transform:rotate(3deg)}
+
+@keyframes drift{from{transform:translateY(0)}to{transform:translateY(18px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.breathe{animation:pulse 3.6s ease-in-out infinite}
+
+@media (max-width:900px){
+  .cover-grid,.g2,.g3,.g4,.alist{grid-template-columns:1fr}
+  .kpis,.branches,.edge{grid-template-columns:repeat(2,1fr)}
+  .wf-grid{grid-template-columns:1fr}
+  .slide{padding:54px 20px}
+  .slide-no{left:20px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+/* print → PDF */
+@media print{
+  @page{size:1280px 820px;margin:0}
+  html,body{background:#fff}
+  .topbar,.hud,.counter,.navhint{display:none!important}
+  .deck{scroll-snap-type:none}
+  .slide{min-height:auto;height:812px;page-break-after:always;break-after:page;border-bottom:0;padding:46px 46px}
+  .slide:last-child{page-break-after:auto}
+  .reveal{opacity:1!important;transform:none!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .phone{box-shadow:none;border:1px solid var(--line)}
+  .card,.kpi,.lens,.mini,.mermaid,.tree{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="topbar"><i id="prog"></i></div>
+<div class="hud">
+  <button id="theme">◐ Theme</button>
+  <button id="print">⤓ PDF</button>
+</div>
+<div class="counter"><span id="cur">01</span> / <span id="tot">13</span></div>
+<div class="navhint">↑ ↓ to navigate</div>
+
+<main class="deck" id="deck">
+
+<!-- 1 COVER -->
+<section class="slide cover" data-title="Cover">
+  <div class="lines" aria-hidden="true"></div>
+  <div class="slide-inner">
+    <div class="cover-grid">
+      <div>
+        <div class="badge reveal"><span class="b">V</span> Voya × Agoda &nbsp;·&nbsp; Android</div>
+        <h1 class="reveal" style="margin-top:20px">Designing the hotel<br><span style="color:var(--blue)">cancellation</span> flow.</h1>
+        <p class="lead reveal">A self-serve cancellation experience for an Android hotel-booking app, built on Agoda's Demand API — with one promise to the traveller: <b style="color:var(--ink)">no surprises about the refund.</b></p>
+        <div class="hand reveal" style="margin-top:14px">cancel with confidence ↝</div>
+        <div class="credits reveal">
+          <span class="m">PM101 · Mid-Course Case</span>
+          <span class="m">Masters' Union</span>
+          <span class="m">Oct 25, 2026</span>
+          <span class="m">Team · Member 1–5 · Group X</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center" class="reveal">
+        <div class="phone">
+          <div class="scr">
+            <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
+            <div class="appbar"><span class="bk">←</span><span class="ttl">Cancel booking</span></div>
+            <div class="body">
+              <div class="wb"><div class="wrow sb"><span class="wh">You'll get back</span><span class="wchip ok">FREE</span></div>
+                <div class="amt" style="font:900 26px/1 var(--font);color:var(--green)">₹18,240</div>
+                <div class="wtxt">Full refund · 5–7 business days</div></div>
+              <div class="wb"><div class="wrow"><div class="ring" style="--p:62"><span>18h</span></div>
+                <div><div class="wtxt b">Free until 26 Oct, 2:00 PM</div><div class="wtxt">Hotel local time</div></div></div></div>
+              <div class="wb" style="gap:5px"><div class="wl lg" style="width:70%"></div><div class="wl s"></div></div>
+            </div>
+            <div class="ctabar"><div class="wbtn primary">Cancel &amp; get ₹18,240 back</div><div class="wbtn ghost">Keep booking</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 WHY -->
+<section class="slide" data-title="Why it matters">
+  <div class="slide-no">0<b>2</b> · CONTEXT</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Why this moment matters</div>
+    <h2 class="reveal">The most anxious step in travel — and our best chance to earn trust.</h2>
+    <div class="grid g3 reveal" style="margin-top:26px">
+      <div class="card"><h3>😣 The problem</h3><p class="muted small" style="margin-top:6px">Users can book in Voya but can't <b>cancel</b> in Voya. When plans change they call support or dispute with their bank — cost, chargebacks, churn, and a lost trust moment.</p></div>
+      <div class="card"><h3>🎯 The goal</h3><p class="muted small" style="margin-top:6px">Let users cancel themselves, seeing <b>exactly</b> what they'll be refunded and when — <i>before</i> they commit. The refund shown is the refund paid.</p></div>
+      <div class="card" style="border-color:color-mix(in srgb,var(--orange) 40%,transparent)"><h3 style="color:var(--orange)">★ North star</h3><p class="muted small" style="margin-top:6px"><b>"No surprises."</b> Transparency over optimism — we trade a few completed cancellations for far fewer disputes and far more repeat bookings.</p></div>
+    </div>
+    <div class="hr reveal"></div>
+    <div class="eyebrow reveal" style="color:var(--biz)">How we'll know it worked</div>
+    <div class="kpis reveal">
+      <div class="kpi"><div class="n"><span class="ico">↗</span> Self-serve rate</div><div class="d">Share of cancellations done in-app without support.</div></div>
+      <div class="kpi"><div class="n"><span class="ico">↘</span> Tickets &amp; disputes</div><div class="d">Cancellation tickets and refund chargebacks fall.</div></div>
+      <div class="kpi"><div class="n"><span class="ico">◎</span> Preview drop-off</div><div class="d">Where trust breaks — the make-or-break screen.</div></div>
+      <div class="kpi"><div class="n"><span class="ico">↺</span> Rebooking rate</div><div class="d">Revenue recovered right after a cancellation.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ASSUMPTIONS -->
+<section class="slide" data-title="Assumptions & scope">
+  <div class="slide-no">0<b>3</b> · GROUND RULES</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Assumptions &amp; scope</div>
+    <h2 class="reveal">What we're designing — and what we're deliberately not.</h2>
+    <div class="grid g2 reveal" style="margin-top:22px;grid-template-columns:1.3fr .7fr">
+      <div>
+        <div class="alist">
+          <div class="it"><span class="k">1</span><div><b>Partner Fulfillment.</b> <span>Voya owns payment + post-booking (incl. cancellation) via Agoda.</span></div></div>
+          <div class="it"><span class="k">2</span><div><b>Full cancellation</b> <span>of one confirmed, prepaid booking made in-app.</span></div></div>
+          <div class="it"><span class="k">3</span><div><b>Booking linkage.</b> <span>Each booking stores Agoda's <code>bookingId</code> mapped to the user.</span></div></div>
+          <div class="it"><span class="k">4</span><div><b>Server-authoritative refund.</b> <span>Amount comes from Agoda's Preview call, never computed on device.</span></div></div>
+          <div class="it"><span class="k">5</span><div><b>Refund to origin.</b> <span>Settled by Agoda/rails; Voya surfaces status only.</span></div></div>
+          <div class="it"><span class="k">6</span><div><b>Re-auth</b> <span>(biometric) gates the destructive confirm step.</span></div></div>
+          <div class="it"><span class="k">7</span><div><b>Locale.</b> <span>Booking currency; deadlines in hotel local time.</span></div></div>
+          <div class="it"><span class="k">8</span><div><b>Window.</b> <span>Cancel up to 1 day before check-in, per Agoda; else assisted.</span></div></div>
+          <div class="it"><span class="k">9</span><div><b>Idempotent confirm.</b> <span>Agoda <code>reference</code> + our key — never double-cancels.</span></div></div>
+          <div class="it"><span class="k">10</span><div><b>~120 s SLA</b> <span>tolerated via a processing state &amp; async <code>PENDING</code>.</span></div></div>
+        </div>
+      </div>
+      <div class="card" style="background:var(--surface-2)">
+        <h3 style="color:var(--red)">Out of scope · v1</h3>
+        <ul class="muted small" style="margin:10px 0 0 16px;line-height:1.9">
+          <li>Date / room <b>modifications</b></li>
+          <li><b>Partial</b> (per-room / per-night) cancel</li>
+          <li>No-show handling</li>
+          <li>Group / corporate bookings</li>
+          <li>Agent / offline cancellation</li>
+        </ul>
+        <div class="hr"></div>
+        <p class="small muted">Captured as future scope in the <a href="../docs/product-requirements.md">PRD</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 IA -->
+<section class="slide" data-title="Information Architecture">
+  <div class="slide-no">0<b>4</b> · INFORMATION ARCHITECTURE</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Information Architecture</div>
+    <h2 class="reveal">Where cancellation lives — and how users reach it.</h2>
+    <div class="grid reveal" style="grid-template-columns:1.1fr .9fr;gap:22px;margin-top:20px">
+      <div class="tree">Voya <b>(Android)</b>
+└─ Bottom nav
+   ├─ Home
+   ├─ Search
+   ├─ <span class="bl">Trips</span>  ◀─ primary entry
+   │  ├─ <span class="bl">Upcoming</span>
+   │  │  └─ <b>Booking Details</b>
+   │  │     ├─ Modify        <span style="color:var(--ink-faint)">(v1: off)</span>
+   │  │     ├─ Contact / Help
+   │  │     └─ <span class="hi">Cancel booking ──┐</span>
+   │  ├─ Completed            │
+   │  └─ <b>Cancelled</b> (refunds)  │
+   └─ Account                 │
+      └─ Help Center          │
+         └─ "Cancel a booking"┤ (secondary)
+                              ▼
+      <span class="hi">╔══ CANCELLATION FLOW ══╗</span>
+      <span class="hi">║</span> 1 Refund Preview        <span class="hi">║</span>
+      <span class="hi">║</span> 2 Reason (optional)     <span class="hi">║</span>
+      <span class="hi">║</span> 3 Confirm + re-auth     <span class="hi">║</span>
+      <span class="hi">║</span> 4 Processing (~120s)    <span class="hi">║</span>
+      <span class="hi">║</span> 5 Confirmed + refund ETA<span class="hi">║</span>
+      <span class="hi">╚═══════════════════════╝</span></div>
+      <div class="grid" style="gap:12px;align-content:start">
+        <div class="card"><h3>Entry points</h3><p class="small muted" style="margin-top:6px"><b>1.</b> Trips › Upcoming › Booking Details › Cancel &nbsp; <b>2.</b> Account › Help › "Cancel a booking" &nbsp; <b>3.</b> Deep link from confirmation email / push.</p></div>
+        <div class="card"><h3>Hero priority order</h3><p class="small muted" style="margin-top:6px">① Refund amount + math → ② deadline / policy → ③ what's cancelled → ④ reason → ⑤ outcome-stating CTA.</p></div>
+        <div class="card" style="border-color:color-mix(in srgb,var(--blue) 35%,transparent)"><h3 style="color:var(--blue)">Information it moves</h3><p class="small muted" style="margin-top:6px"><b>In:</b> booking + policy (Retrieve), refund quote (Preview). <b>User:</b> intent, re-auth, reason. <b>Out:</b> cancel command (Confirm) → refund status + receipt.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 FLOW -->
+<section class="slide" data-title="Logic & information flow">
+  <div class="slide-no">0<b>5</b> · FLOW OF LOGIC + INFORMATION</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Flow of logic + information</div>
+    <h2 class="reveal" style="margin-bottom:8px">End-to-end, across three systems.</h2>
+    <div class="legend reveal">
+      <span><span class="dot" style="background:var(--blue)"></span> User (app)</span>
+      <span><span class="dot" style="background:var(--orange)"></span> Voya backend</span>
+      <span><span class="dot" style="background:var(--green)"></span> Agoda Demand API</span>
+      <span><span class="dot" style="background:var(--red)"></span> Exit / assisted</span>
+    </div>
+    <div class="flowmap reveal" id="flow">
+      <div class="frow">
+        <div class="fstep user"><span class="fn">1</span><div class="ft">Booking Details</div><div class="fapi fa">User</div></div>
+        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
+        <div class="fstep ag"><span class="fn">2</span><div class="ft">Get booking + policy</div><div class="fapi fa">Retrieve Booking</div></div>
+        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
+        <div class="fstep de"><span class="fn">3</span><div class="ft">Within window?</div><div class="fapi">now &lt; checkin − 1d</div></div>
+        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
+        <div class="fstep user"><span class="fn">4</span><div class="ft">Tap Cancel</div><div class="fapi fa">User</div></div>
+        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
+        <div class="fstep ag"><span class="fn">5</span><div class="ft">Quote the refund</div><div class="fapi fa">Cancellation · Preview</div></div>
+      </div>
+      <div class="fwrap">continues ↓</div>
+      <div class="frow">
+        <div class="fstep user"><span class="fn">6</span><div class="ft">Refund Preview</div><div class="fapi">Paid − Fee = Refund · ◇ policy</div></div>
+        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
+        <div class="fstep user"><span class="fn">7</span><div class="ft">Confirm + re-auth</div><div class="fapi">reason 0–44 · biometric</div></div>
+        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
+        <div class="fstep ag"><span class="fn">8</span><div class="ft">Cancel the booking</div><div class="fapi fa">Confirm · + idemp. key</div></div>
+        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
+        <div class="fstep user"><span class="fn">9</span><div class="ft">Processing</div><div class="fapi">~120s · PENDING ok</div></div>
+        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
+        <div class="fstep ok"><span class="fn">10</span><div class="ft">Confirmed + refund</div><div class="fapi fa">refund.completed</div></div>
+      </div>
+      <div class="fexits">
+        <div class="fexit stop">◇ <b>Within window? — No</b> → assisted / fee-waiver (step 3)</div>
+        <div class="fexit warn">◇ <b>Result — error</b> → retry (same reference) / support (step 8)</div>
+        <div class="fexit ok">◇ <b>Confirmed</b> → refund status tracker · rebook nudge (step 10)</div>
+      </div>
+    </div>
+    <p class="small muted reveal" style="margin-top:10px"><span style="color:var(--blue)">●</span> User &nbsp; <span style="color:var(--green)">●</span> Agoda API &nbsp; — refund is always Agoda's number; Confirm carries the Preview <code>reference</code> + our idempotency key. Source: <code>flows/cancellation-flow.mmd</code>.</p>
+  </div>
+</section>
+
+<!-- 6 API MAP -->
+<section class="slide" data-title="Agoda API map">
+  <div class="slide-no">0<b>6</b> · AGODA DEMAND API</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal" style="color:var(--dev)">The integration surface</div>
+    <h2 class="reveal">Every screen is one Agoda call away.</h2>
+    <div class="grid reveal" style="grid-template-columns:1.15fr .85fr;gap:20px;margin-top:20px">
+      <div>
+        <table class="apitable">
+          <tr><th>Screen</th><th>Agoda call</th><th>Key data</th></tr>
+          <tr><td>My Trips / Details</td><td class="m">Retrieve Booking</td><td><code>status</code>, <code>cancellationPolicy</code></td></tr>
+          <tr><td>Refund Preview</td><td class="m">Cancellation · Preview</td><td>→ <code>reference</code>, <code>refundRate</code></td></tr>
+          <tr><td>Confirm + re-auth</td><td class="m">Cancellation · Confirm</td><td><code>cancelReason</code> 0–44</td></tr>
+          <tr><td>Processing</td><td class="m">await / poll</td><td><code>PENDING</code> ~120s</td></tr>
+          <tr><td>Confirmed</td><td class="m">refund.completed</td><td>ref, amount, ETA</td></tr>
+          <tr><td>Past window</td><td class="m">Fee-Waiver</td><td>assisted route</td></tr>
+        </table>
+        <div class="grid g2" style="margin-top:14px">
+          <div class="card" style="padding:14px"><div class="wrow sb"><h3 style="font-size:14px">Auth</h3><span class="tag doc">DOCUMENTED</span></div><p class="small muted" style="margin-top:6px"><code>Authorization: &lt;Site-ID&gt;:&lt;API-Key&gt;</code> (or OAuth 2.0). IP-whitelisted. Bad creds → <code>error 108</code>.</p></div>
+          <div class="card" style="padding:14px"><div class="wrow sb"><h3 style="font-size:14px">Two-step cancel</h3><span class="tag doc">DOCUMENTED</span></div><p class="small muted" style="margin-top:6px">Preview returns a <code>reference</code> you must pass to Confirm — it binds the confirm to the exact refund shown.</p></div>
+        </div>
+      </div>
+      <div class="codeblock reveal">
+<span class="c"># Preview → powers the refund screen</span>
+POST /cancellation/preview
+<span class="k">Authorization</span>: 123456:****-****-****
+{ <span class="k">"bookingId"</span>: <span class="s">889001234</span> }
+
+<span class="c"># 200</span>
+{ "cancellationSummary": {
+  <span class="k">"reference"</span>: <span class="s">70421</span>,
+  <span class="k">"refundRate"</span>: [{ "currency":"INR",
+     "inclusive": <span class="s">18240.00</span> }] }}
+
+<span class="c"># Confirm → the destructive action</span>
+POST /cancellation/confirm
+<span class="k">Idempotency-Key</span>: voya-cxl-889..-9f2a
+{ "bookingId":889001234,
+  <span class="k">"reference"</span>:70421,
+  <span class="k">"cancelReason"</span>:7,
+  "refundRate":{ "currency":"INR",
+     "inclusive":18240.00 } }
+<span class="c"># → 200 empty  (or PENDING)</span>
+      </div>
+    </div>
+    <p class="small muted reveal" style="margin-top:12px"><span class="tag doc" style="vertical-align:middle">DOCUMENTED</span> field names from Agoda's public Demand docs · <span class="tag inf" style="vertical-align:middle">INFERRED</span> exact paths + refund webhook. Full map in <code>docs/api-integration.md</code>.</p>
+  </div>
+</section>
+
+<!-- 7 WIREFRAME 1 : ENTRY -->
+<section class="slide wf-slide" data-title="Wireframe · Entry">
+  <div class="slide-no">0<b>7</b> · WIREFRAME ① &nbsp; ENTRY</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Wireframe ① — finding the booking</div>
+    <h2 class="reveal">My Trips → Booking Details.</h2>
+    <div class="wf-grid reveal" style="margin-top:18px">
+      <div class="phones">
+        <div class="phonewrap"><div class="phone"><div class="scr" id="s01">
+          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
+          <div class="appbar"><span class="ttl">My trips</span><span class="sp">◌</span></div>
+          <div class="body">
+            <div class="wseg"><div class="on">Upcoming</div><div>Completed</div><div>Cancelled</div></div>
+            <div class="wb"><div class="wrow"><div class="wimg" style="width:54px;height:54px"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="wtxt b">The Leela Palace</div><div class="wtxt">26–28 Oct · 1 room · 2 guests</div>
+              <div class="wrow"><span class="wchip ok">FREE till 26 Oct</span><span class="wchip bl">CONFIRMED</span></div></div></div></div>
+            <div class="wb"><div class="wrow"><div class="wimg" style="width:54px;height:54px"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="wtxt b">Taj Santacruz</div><div class="wtxt">12–14 Nov · 1 room · 2 guests</div>
+              <div class="wrow"><span class="wchip bad">NON-REFUNDABLE</span><span class="wchip bl">CONFIRMED</span></div></div></div></div>
+          </div>
+          <div class="botnav"><div class="bn"><span class="ic">⌂</span>Home</div><div class="bn"><span class="ic">◎</span>Search</div><div class="bn on"><span class="ic">✈</span>Trips</div><div class="bn"><span class="ic">◍</span>Account</div></div>
+        </div></div><div class="cap">01 · My Trips</div></div>
+
+        <div class="phonewrap"><div class="phone"><div class="scr" id="s02">
+          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
+          <div class="appbar"><span class="bk">←</span><span class="ttl">Booking details</span></div>
+          <div class="body">
+            <div class="wimg" style="height:78px"></div>
+            <div class="wb" style="gap:5px"><div class="wtxt b">The Leela Palace, Bengaluru</div><div class="wtxt">23 HAL Airport Rd · ★ 4.8</div></div>
+            <div class="wb"><div class="wrow sb"><div><div class="wtxt">Check-in</div><div class="wtxt b">Sun 26 Oct</div></div><div><div class="wtxt">Check-out</div><div class="wtxt b">Tue 28 Oct</div></div><div><div class="wtxt">Paid</div><div class="wtxt b">₹18,240</div></div></div></div>
+            <div class="wb" style="border-color:color-mix(in srgb,var(--green) 40%,transparent);background:var(--green-soft)"><div class="wrow"><div class="ring" style="--p:62"><span>18h</span></div><div><div class="wtxt b" style="color:var(--green)">Free cancellation</div><div class="wtxt">until 26 Oct, 2:00 PM (hotel time)</div></div></div></div>
+          </div>
+          <div class="ctabar"><div class="wrow" style="gap:7px"><div class="wbtn ghost" style="flex:1;opacity:.45">Modify</div><div class="wbtn" style="flex:1">Contact</div></div><div class="wbtn ghost" style="color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,transparent)">Cancel booking</div></div>
+        </div></div><div class="cap">02 · Booking Details</div></div>
+      </div>
+
+      <div class="lenses">
+        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>"Cancel" is present but not the loudest control. The <b>free-cancel deadline shows on the card itself</b>, so the user sees it before drilling in — with a countdown ring inside the window.</p></div>
+        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>List from cache, reconciled with <code>Retrieve Booking</code> → <code>status</code> + <code>cancellationPolicy{date[]}</code>; deadline derived from <code>date[]</code>. Guard: if <code>now ≥ check-in − 1d</code> → assisted route.</p></div>
+        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Surfacing the deadline early nudges users to cancel <b>inside the free window</b> → fewer penalties and "why was I charged?" tickets. Best place to offer "modify instead".</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 WIREFRAME 2 : REFUND PREVIEW (HERO) -->
+<section class="slide wf-slide" data-title="Wireframe · Refund preview">
+  <div class="slide-no">0<b>8</b> · WIREFRAME ② &nbsp; THE HERO SCREEN</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Wireframe ② — refund preview</div>
+    <h2 class="reveal">The make-or-break screen: show the money, then ask.</h2>
+    <div class="wf-grid reveal" style="margin-top:8px">
+      <div class="phones">
+        <div class="phonewrap"><div class="phone"><div class="scr" id="s03">
+          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
+          <div class="appbar"><span class="bk">←</span><span class="ttl">Cancel booking</span></div>
+          <div class="body">
+            <div class="wb" style="border-color:color-mix(in srgb,var(--green) 40%,transparent)"><div class="wrow sb"><span class="wh">You'll get back</span><span class="wchip ok">FREE</span></div>
+              <div style="font:900 24px/1 var(--font);color:var(--green)">₹18,240</div></div>
+            <div class="wnum"><div class="r"><span>Amount paid</span><span>₹18,240</span></div><div class="r"><span>Cancellation fee</span><span>− ₹0</span></div><div class="r tot"><span>Refund</span><b>₹18,240</b></div></div>
+            <div class="wb" style="gap:5px"><div class="wtxt b">Back to your card · 5–7 business days</div><div class="wrow"><div class="ring" style="--p:62"><span>18h</span></div><div class="wtxt">Free until 26 Oct, 2:00 PM</div></div></div>
+            <div class="wfield">＋ Add a reason (optional)</div>
+          </div>
+          <div class="ctabar"><div class="wbtn primary">Cancel &amp; get ₹18,240 back</div><div class="wbtn ghost">Keep booking</div></div>
+        </div></div><div class="cap">03 · Refund Preview</div></div>
+      </div>
+      <div class="lenses">
+        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>Refund amount is the hero; the <b>math is explicit</b> (Paid − Fee = Refund). Policy in plain language, CTA states the outcome. Reason is never a gate.</p></div>
+        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>Call <code>Cancellation Preview {bookingId}</code> on entry → render <code>refundRate</code> (<b>server truth, never computed</b>). Hold <code>reference</code> for Confirm; refresh if the quote goes stale.</p></div>
+        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Transparency here is the biggest lever on disputes &amp; chargebacks. Instrument drop-off. Non-refundable → offer <b>travel credit</b> (fast-follow) to save CSAT.</p></div>
+      </div>
+    </div>
+    <div class="branches reveal" id="s03branches" style="margin-top:8px">
+      <div class="branch free"><h4>● Free</h4><div class="amt">₹18,240</div><p>Inside the window — full refund. CTA: "Cancel &amp; get ₹18,240 back".</p></div>
+      <div class="branch partial"><h4>● Partial</h4><div class="amt">₹12,768</div><p>Penalty tier applies (−₹5,472). Show paid − fee clearly. CTA names the net refund.</p></div>
+      <div class="branch nonref"><h4>● Non-refundable</h4><div class="amt">₹0</div><p>Calm, honest warning (not alarm-red). CTA: "Cancel — no refund". Offer credit later.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 WIREFRAME 3 : CONFIRM -->
+<section class="slide wf-slide" data-title="Wireframe · Confirm">
+  <div class="slide-no">0<b>9</b> · WIREFRAME ③ &nbsp; CONFIRM + RE-AUTH</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Wireframe ③ — the destructive step</div>
+    <h2 class="reveal">Deliberate confirmation, with re-auth.</h2>
+    <div class="wf-grid reveal" style="margin-top:18px">
+      <div class="phones">
+        <div class="phonewrap"><div class="phone"><div class="scr" id="s04">
+          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
+          <div class="appbar"><span class="bk">←</span><span class="ttl">Confirm cancellation</span></div>
+          <div class="body">
+            <div class="wb"><div class="wtxt b">The Leela Palace · 26–28 Oct</div><div class="wrow sb"><span class="wtxt">You'll be refunded</span><span class="wtxt b" style="color:var(--green)">₹18,240</span></div></div>
+            <div class="wb" style="border-color:color-mix(in srgb,var(--amber) 45%,transparent);background:var(--amber-soft)"><div class="wrow"><span style="font-size:16px">⚠️</span><div class="wtxt b" style="color:var(--amber)">This can't be undone.</div></div><div class="wtxt">The room is released to the hotel immediately.</div></div>
+            <div class="wb center" style="gap:4px"><div class="bio">☝</div><div class="wtxt b">Confirm with fingerprint</div><div class="wtxt">Re-authenticate to cancel</div></div>
+          </div>
+          <div class="ctabar"><div class="wbtn danger">Hold to confirm cancellation</div><div class="wbtn ghost">Go back</div></div>
+        </div></div><div class="cap">04 · Confirm + Re-auth</div></div>
+      </div>
+      <div class="lenses">
+        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>One last plain summary + an <b>honest "can't be undone"</b>. Re-auth and a <b>hold-to-confirm</b> (not a stray tap). Easy back-out always visible.</p></div>
+        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p><code>Cancellation Confirm {bookingId, reference, cancelReason, refundRate, remark?}</code> + our <b>idempotency key</b>. Map reason → <code>cancelReason</code> 0–44. Retry-safe.</p></div>
+        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Deliberate friction prevents regret cancellations &amp; fraud. Reason codes feed analytics and supply insight back to Agoda.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 WIREFRAME 4 : PROCESSING + CONFIRMED -->
+<section class="slide wf-slide" data-title="Wireframe · Processing & done">
+  <div class="slide-no">1<b>0</b> · WIREFRAME ④ &nbsp; PROCESSING → CONFIRMED</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Wireframe ④ — the wait, then relief</div>
+    <h2 class="reveal">Honest processing, then a trust artifact.</h2>
+    <div class="wf-grid reveal" style="margin-top:18px">
+      <div class="phones">
+        <div class="phonewrap"><div class="phone"><div class="scr" id="s05">
+          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
+          <div class="appbar"><span class="ttl">Cancelling…</span></div>
+          <div class="body center" style="justify-content:center;gap:12px">
+            <div class="spin"></div>
+            <div class="wtxt b">Confirming with the hotel</div>
+            <div class="wtxt" style="max-width:180px">This can take up to 2 minutes. You can leave — we'll notify you when it's done.</div>
+            <div class="wl" style="width:150px"></div>
+          </div>
+          <div class="ctabar"><div class="wbtn ghost">Notify me &amp; leave</div></div>
+        </div></div><div class="cap">05 · Processing (~120s)</div></div>
+
+        <div class="phonewrap"><div class="phone"><div class="scr" id="s06">
+          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
+          <div class="appbar" style="background:var(--green)"><span class="ttl">Cancelled</span></div>
+          <div class="body center" style="gap:9px">
+            <div class="check">✓</div>
+            <div class="wh">Booking cancelled</div>
+            <div class="wtxt">Ref · <b>VOYA-CXL-70421</b></div>
+            <div class="wb" style="width:100%;border-color:color-mix(in srgb,var(--green) 40%,transparent)"><div class="wrow sb"><span class="wtxt b">Refund</span><span class="wtxt b" style="color:var(--green)">₹18,240</span></div><div class="wtxt">To your card · arrives in 5–7 business days</div></div>
+            <div class="wtxt">📧 Receipt sent to your email</div>
+          </div>
+          <div class="ctabar"><div class="wbtn blue">View refund status</div><div class="wbtn ghost">Find another stay</div></div>
+        </div></div><div class="cap">06 · Confirmed</div></div>
+      </div>
+      <div class="lenses">
+        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>Processing shows progress + reassurance and <b>lets you leave</b> — never an infinite spinner. Confirmed leads with the <b>refund timeline</b>, the real anxiety-reliever.</p></div>
+        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>Await Confirm; on <code>PENDING</code>, poll refund status / await webhook <code>refund.completed</code>. Persist <code>cancellationId</code>; send email/push; move booking to Cancelled.</p></div>
+        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Confirmation deflects "did it work?" tickets; the <b>rebook CTA recovers revenue</b>; track refund-SLA adherence.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 WIREFRAME 5 : EDGE STATES -->
+<section class="slide wf-slide" data-title="Wireframe · Edge states">
+  <div class="slide-no">1<b>1</b> · WIREFRAME ⑤ &nbsp; CORNER CASES</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Wireframe ⑤ — the unhappy paths <span class="hand" style="font-size:18px;margin-left:8px">this is the real product ↴</span></div>
+    <h2 class="reveal">Every failure has a next step.</h2>
+    <div class="edge reveal" id="s07" style="margin-top:18px">
+      <div class="mini e1"><div class="top">⊘ Non-refundable</div><div class="in">
+        <div class="wtxt b">You won't be refunded</div><div class="wnum"><div class="r"><span>Paid</span><span>₹9,500</span></div><div class="r tot"><span>Refund</span><b style="color:var(--red)">₹0</b></div></div>
+        <div class="wtxt">Per the hotel's policy.</div><div class="wbtn danger" style="font-size:11px;padding:8px">Cancel — no refund</div><div class="wtxt" style="text-align:center;color:var(--blue)">Get travel credit instead →</div></div></div>
+      <div class="mini e2"><div class="top">⟳ Couldn't cancel</div><div class="in">
+        <div style="font-size:22px;text-align:center">⚠️</div><div class="wtxt b" style="text-align:center">Something went wrong</div><div class="wtxt" style="text-align:center">Your booking is unchanged and you haven't been charged.</div>
+        <div class="wbtn blue" style="font-size:11px;padding:8px">Try again</div><div class="wbtn ghost" style="font-size:11px;padding:8px">Contact support</div></div></div>
+      <div class="mini e3"><div class="top">⏱ Window closed</div><div class="in">
+        <div class="wtxt b">Free cancellation has ended</div><div class="wtxt">It's within 24h of check-in. We can request an <b>assisted cancellation</b> or fee waiver.</div>
+        <div class="wbtn" style="font-size:11px;padding:8px;background:var(--amber);border-color:var(--amber);color:#fff">Request fee waiver</div><div class="wbtn ghost" style="font-size:11px;padding:8px">Chat with us</div></div></div>
+      <div class="mini e4"><div class="top">◈ Refund status</div><div class="in">
+        <div class="wrow"><span class="dot" style="background:var(--green)"></span><div class="wtxt b">Initiated · 25 Oct</div></div>
+        <div class="wrow"><span class="dot breathe" style="background:var(--amber)"></span><div class="wtxt b">Processing</div></div>
+        <div class="wrow"><span class="dot" style="background:var(--line)"></span><div class="wtxt">Refunded · by 1 Nov</div></div>
+        <div class="wl" style="width:80%"></div><div class="wtxt">₹18,240 to •••• 4291</div></div></div>
+    </div>
+    <div class="grid g3 reveal" style="margin-top:14px">
+      <div class="lens design" style="margin:0"><h4><span class="ic">🎨</span> Design</h4><p>No dead ends — plain-language errors, each with a clear action. Non-refundable stays calm; status tracker answers "where's my money?".</p></div>
+      <div class="lens dev" style="margin:0"><h4><span class="ic">⚙️</span> Developer</h4><p>Map Agoda <code>errorMessage{id,subId,message}</code> + <code>error 108</code>; retriable vs terminal; <b>idempotent retry</b> (same <code>reference</code>); graceful offline.</p></div>
+      <div class="lens biz" style="margin:0"><h4><span class="ic">📈</span> Business</h4><p>Good failure UX = fewer chargebacks and calls. Track failure reasons to fix the top causes; fee-waiver protects goodwill.</p></div>
+    </div>
+  </div>
+</section>
+
+<!--WF-->
+
+
+<!-- 12 PRODUCT NOTE 1 -->
+<section class="slide" data-title="Product note I">
+  <div class="slide-no">1<b>2</b> · PRODUCT NOTE &nbsp;①</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal">Product note · the flow &amp; the thinking</div>
+    <h2 class="reveal">Built around one promise: no surprises.</h2>
+    <div class="grid g2 reveal" style="margin-top:20px">
+      <div class="card">
+        <h3>The moment</h3>
+        <p class="small muted" style="margin-top:8px">Cancellation is the most emotional step in travel — plans fell through, money's at stake, a fight half-expected. Make it clear, fast and honest and a <i>negative</i> moment becomes a reason to trust us and rebook. Make it opaque and users call support, dispute with the bank, and leave one-star reviews.</p>
+        <h3 style="margin-top:14px">The flow</h3>
+        <p class="small muted" style="margin-top:8px">Booking Details → <b>Cancel</b> → we call Agoda <b>Preview</b> and show the refund math, method, ETA and a live deadline countdown — the number is <b>Agoda's, not ours</b>. The screen adapts to Free / Partial / Non-refundable; the CTA states the outcome. Continue → optional reason → <b>Confirm + re-auth</b> → Agoda <b>Confirm</b> (with <code>reference</code> + idempotency key) → honest <b>Processing</b> (~120s, async-tolerant) → <b>Confirmed</b> with reference, refund &amp; timeline, plus a receipt and status tracker.</p>
+      </div>
+      <div class="card" style="background:var(--surface-2)">
+        <h3>Why these choices</h3>
+        <ul class="small muted" style="margin:10px 0 0 16px;line-height:1.85">
+          <li><b>Transparency over optimism</b> — show the real refund up front; lose a few cancels, save far more in disputes.</li>
+          <li><b>Server-authoritative money</b> — Agoda's number, surfaced, never recomputed on device.</li>
+          <li><b>Deliberate friction</b> — re-auth + outcome-stating CTA protect users from regret &amp; fraud, without feeling like a trap.</li>
+          <li><b>Designed for the unhappy path</b> — the policy branches and error states <i>are</i> the product; the happy path is the easy 20%.</li>
+        </ul>
+        <div class="hr"></div>
+        <p class="hand" style="font-size:20px">the refund shown is the refund paid.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 PRODUCT NOTE 2 -->
+<section class="slide" data-title="Product note II">
+  <div class="slide-no">1<b>3</b> · PRODUCT NOTE &nbsp;② + ROADMAP</div>
+  <div class="slide-inner">
+    <div class="eyebrow reveal" style="color:var(--biz)">What we'll watch · risks · what's next</div>
+    <h2 class="reveal">Ship v1, learn at the Preview screen, then go deeper.</h2>
+    <div class="grid g3 reveal" style="margin-top:22px">
+      <div class="card"><h3 style="color:var(--biz)">We'll watch</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li>Self-serve cancel rate</li><li>Cancellation tickets ↓</li><li>Disputes / chargebacks ↓</li><li><b>Preview drop-off</b> (make-or-break)</li><li>Refund-SLA adherence</li><li>Post-cancel rebooking · CSAT</li></ul></div>
+      <div class="card"><h3 style="color:var(--amber)">Risks &amp; open Qs</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li>Exact Agoda REST paths + refund-status/webhook channel to confirm</li><li>Non-refundable = satisfaction cliff → travel-credit</li><li>Deadline timezone correctness (hotel local time)</li></ul></div>
+      <div class="card" style="border-color:color-mix(in srgb,var(--orange) 40%,transparent)"><h3 style="color:var(--orange)">Roadmap</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li><b>v1</b> this flow</li><li><b>v1.1</b> refund-status push · "modify instead"</li><li><b>vNext</b> partial / per-room cancel · non-ref → travel credit · group bookings</li></ul></div>
+    </div>
+    <div class="hr reveal"></div>
+    <div class="reveal" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="tag">docs/product-requirements.md</span>
+        <span class="tag">docs/assumptions.md</span>
+        <span class="tag">docs/api-integration.md</span>
+        <span class="tag">flows/cancellation-flow.mmd</span>
+        <span class="tag">wireframes/design-notes.md</span>
+      </div>
+      <div class="hand" style="font-size:22px">thank you — team Voya ✦</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  document.getElementById('tot').textContent=String(slides.length).padStart(2,'0');
+  var prog=document.getElementById('prog'),cur=document.getElementById('cur');
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
+    e.target.querySelectorAll('.reveal').forEach(function(r,i){setTimeout(function(){r.classList.add('in')},i*70)});
+    var idx=slides.indexOf(e.target); if(idx>=0){cur.textContent=String(idx+1).padStart(2,'0');}
+  }})},{threshold:.4});
+  slides.forEach(function(s){io.observe(s)});
+  var deck=document.getElementById('deck');
+  function onScroll(){var h=deck.scrollHeight-window.innerHeight;prog.style.width=(window.scrollY/(h||1)*100)+'%';}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  function go(d){var y=window.scrollY,t=null;for(var i=0;i<slides.length;i++){var o=slides[i].offsetTop;
+    if(d>0&&o>y+5){t=o;break;} if(d<0&&o<y-5){t=o;}}
+    if(t!==null)window.scrollTo({top:t,behavior:'smooth'});}
+  window.addEventListener('keydown',function(e){
+    if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(1);}
+    if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();go(-1);}
+  });
+  document.getElementById('print').onclick=function(){window.print();};
+  document.getElementById('theme').onclick=function(){
+    var r=document.documentElement,cuR=r.getAttribute('data-theme');
+    r.setAttribute('data-theme',cuR==='dark'?'light':'dark');
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+%% Agoda-powered hotel cancellation - logic + information flow
+%% Lanes by colour: User (app) / Voya Backend+Agoda API / decision / exit
+%% Render: https://mermaid.live  or  `mmdc -i cancellation-flow.mmd -o cancellation-flow.png`
+flowchart TB
+  classDef user fill:#E8F0FE,stroke:#1E4FA3,stroke-width:1.5px,color:#0F1B2D;
+  classDef be fill:#FFF3E6,stroke:#F58220,stroke-width:1.5px,color:#0F1B2D;
+  classDef ag fill:#E6F7F0,stroke:#1FA971,stroke-width:1.5px,color:#0F1B2D;
+  classDef de fill:#FFFFFF,stroke:#51607A,stroke-width:1.5px,color:#0F1B2D;
+  classDef st fill:#FDECEA,stroke:#E0564B,stroke-width:1.5px,color:#0F1B2D;
+  classDef ok fill:#E6F7F0,stroke:#1FA971,stroke-width:2px,color:#0F1B2D;
+
+  Start([User opens Trips]) --> BD[Booking Details screen]
+  BD --> RET[/Agoda: Retrieve Booking/]
+  RET --> BD2[Show status + cancellation policy]
+  BD2 --> D0{Within cancel window? now less than check-in minus 1 day}
+  D0 -->|No| ESC[Assisted / Fee-Waiver cancellation]
+  D0 -->|Yes| TAP[Tap Cancel booking]
+
+  TAP --> GW[Voya Backend: request cancellation quote]
+  GW --> PRE[/Agoda: Cancellation Preview - bookingId/]
+  PRE --> RP["Refund Preview: Paid minus Fee = Refund (reference + refundRate)"]
+
+  RP --> D1{Policy outcome}
+  D1 -->|Free| FREE[Full refund copy]
+  D1 -->|Partial| PART[Penalty + refund copy]
+  D1 -->|Non-refundable| NR[No-refund warning]
+  FREE --> D2{Proceed?}
+  PART --> D2
+  NR --> D2
+  D2 -->|No| BD
+  D2 -->|Yes| REASON["Pick reason - optional - maps to cancelReason 0-44"]
+
+  REASON --> CFM[Confirm + re-authenticate biometric]
+  CFM --> D3{Auth OK?}
+  D3 -->|No| CFM
+  D3 -->|Yes| POST[Voya Backend: POST Confirm + idempotency key]
+  POST --> CNF[/Agoda: Cancellation Confirm - bookingId reference cancelReason refundRate/]
+  CNF --> D4{Agoda result}
+  D4 -->|error / errorMessage| ERR[Error state: retry or contact support]
+  ERR -->|retry same reference| POST
+  D4 -->|200 or PENDING ~120s| PROC[Processing state]
+
+  PROC --> REF[/Agoda: Refund settlement - webhook refund.completed/]
+  REF --> OK([Cancellation Confirmed: ref + refund amount + timeline])
+  OK --> TRACK[Refund status tracker - Trips Cancelled]
+  OK --> REBOOK[Rebook nudge]
+
+  class Start,BD,BD2,TAP,RP,FREE,PART,NR,REASON,CFM,PROC,TRACK,REBOOK user
+  class GW,POST be
+  class RET,PRE,CNF,REF ag
+  class D0,D1,D2,D3,D4 de
+  class ESC,ERR st
+  class OK ok
