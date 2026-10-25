@@ -71,7 +71,7 @@ Low-fidelity Android wireframes A to P, with the three notes that appear beside 
 ![Cancellation confirmed](screens/I-cancellation-confirmed.png)
 
 - **Design (UI/UX):** The headline says Cancelled and repeats hotel, dates and reference. Refund wording gives no number of days. View booking opens the cancelled record.
-- **Developer (API):** [D] A successful Confirm is HTTP 200 with an empty body. Voya then reads Booking Detail and shows this screen only when the status is cancelled [V: confirm exact status in sandbox].
+- **Developer (API):** [D] A successful Confirm is HTTP 200 with an empty body. Voya then reads Booking Detail and shows this screen only when the status is cancelled. [V] Confirm the exact status value in the sandbox.
 - **Business:** [A] Cancelling the booking and returning money are separate: the payment gateway sends the refund. Agoda does not document refund timing under Partner Fulfillment [V].
 
 ## J. Outcome unknown after a timeout

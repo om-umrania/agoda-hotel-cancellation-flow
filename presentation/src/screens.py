@@ -189,7 +189,7 @@ NOTES = {
       "[D] Confirm may take up to 120 seconds. [A] The backend records that Confirm was sent before the call, so a closed app can recover by reading Booking Detail.",
       "The backend, not the screen, owns the request. A traveler who leaves cannot trigger a second cancellation."),
 "I": ("The headline says Cancelled and repeats hotel, dates and reference. Refund wording gives no number of days. View booking opens the cancelled record.",
-      "[D] A successful Confirm is HTTP 200 with an empty body. Voya then reads Booking Detail and shows this screen only when the status is cancelled [V: confirm exact status in sandbox].",
+      "[D] A successful Confirm is HTTP 200 with an empty body. Voya then reads Booking Detail and shows this screen only when the status is cancelled. [V] Confirm the exact status value in the sandbox.",
       "[A] Cancelling the booking and returning money are separate: the payment gateway sends the refund. Agoda does not document refund timing under Partner Fulfillment [V]."),
 "J": ("Neither success nor failure. It says the booking may still be active, that we are checking, and asks the traveler not to cancel again. Support is one tap away.",
       "[D] No reply in time does not mean cancelled. The backend reads Booking Detail first and asks for a fresh Preview only if the booking is still active. [A] Traveler is notified when the check finishes.",
