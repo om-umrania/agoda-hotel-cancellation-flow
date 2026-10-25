@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Voya and Agoda, cancellation flow",
-  description:
-    "A working prototype of a self-serve hotel cancellation flow for an Android and iOS app, powered by Agoda's Demand API. Switch iOS or Android, wireframe or design, and try real situations and corner cases.",
+  title: "Voya hotel cancellation, Android prototype",
+  description: "Interactive prototype of a hotel cancellation flow for Voya on Android, using simulated Agoda API responses.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

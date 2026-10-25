@@ -1,739 +1,129 @@
-<!doctype html>
-<html lang="en" data-theme="light">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agoda Cancellation Flow</title>
-<meta name="description" content="PM101 case: an Android hotel-cancellation flow for Voya, powered by Agoda's Demand API, IA, flowchart, annotated wireframes and product note.">
-<style>
-:root{
-  --ink:#0F1B2D; --ink-soft:#51607A; --ink-faint:#8C97A8;
-  --paper:#EEF2F9; --surface:#FFFFFF; --surface-2:#F6F8FC; --line:#DCE3EF;
-  --blue:#1E4FA3; --blue-deep:#143872; --blue-rgb:30,79,163;
-  --sky:#3E8EF7; --orange:#F58220; --orange-soft:#FFEDDC;
-  --green:#1FA971; --green-soft:#E4F6EE; --amber:#E0912F; --amber-soft:#FBF0DD;
-  --red:#E0564B; --red-soft:#FBEAE8;
-  --design:#7A5BE6; --dev:#1E4FA3; --biz:#0E9F8E;
-  --shadow:0 1px 2px rgba(15,27,45,.04), 0 10px 30px rgba(15,27,45,.07);
-  --shadow-lg:0 20px 60px rgba(15,27,45,.14);
-  --radius:18px; --radius-sm:12px;
-  --font:"Helvetica Neue",Helvetica,Arial,"Segoe UI",Roboto,system-ui,sans-serif;
-  --mono:"SF Mono",Menlo,Monaco,Consolas,monospace;
-  --hand:"Helvetica Neue",Helvetica,Arial,sans-serif;
-}
-:root:not([data-theme="light"]) :root, :root[data-theme="dark"]{ color-scheme:dark; }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --ink:#EAF0FA; --ink-soft:#A7B4C8; --ink-faint:#71809A;
-    --paper:#0A0F18; --surface:#121a28; --surface-2:#0F1725; --line:#243247;
-    --blue:#6FA3FF; --blue-deep:#9DC0FF; --blue-rgb:111,163,255;
-    --sky:#6FA3FF; --orange:#FFA54D; --orange-soft:#33240f;
-    --green:#49C892; --green-soft:#10261c; --amber:#E9B567; --amber-soft:#2a2110;
-    --red:#F0786E; --red-soft:#2c1512;
-    --design:#A98BFF; --dev:#6FA3FF; --biz:#39C4B2;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
-    --shadow-lg:0 20px 60px rgba(0,0,0,.55);
-  }
-}
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --ink:#EAF0FA; --ink-soft:#A7B4C8; --ink-faint:#71809A;
-  --paper:#0A0F18; --surface:#121a28; --surface-2:#0F1725; --line:#243247;
-  --blue:#6FA3FF; --blue-deep:#9DC0FF; --blue-rgb:111,163,255;
-  --sky:#6FA3FF; --orange:#FFA54D; --orange-soft:#33240f;
-  --green:#49C892; --green-soft:#10261c; --amber:#E9B567; --amber-soft:#2a2110;
-  --red:#F0786E; --red-soft:#2c1512;
-  --design:#A98BFF; --dev:#6FA3FF; --biz:#39C4B2;
-  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
-  --shadow-lg:0 20px 60px rgba(0,0,0,.55);
-}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Voya hotel cancellation, Android wireframes</title><style>@page { size: 1280px 720px; margin: 0 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--paper);color:var(--ink);line-height:1.5;
-  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-a{color:var(--blue);text-decoration:none}
-
-/* fixed chrome */
-.topbar{position:fixed;inset:0 0 auto 0;height:4px;z-index:60;background:transparent}
-.topbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--orange));transition:width .25s ease}
-.hud{position:fixed;right:16px;top:16px;z-index:60;display:flex;gap:8px;align-items:center}
-.hud button{font-family:var(--font);font-size:12px;font-weight:600;color:var(--ink-soft);
-  background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 12px;
-  cursor:pointer;box-shadow:var(--shadow);display:inline-flex;gap:6px;align-items:center}
-.hud button:hover{color:var(--ink);border-color:var(--blue)}
-.counter{position:fixed;left:16px;bottom:14px;z-index:60;font:600 12px/1 var(--mono);
-  color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);
-  border-radius:999px;padding:7px 11px;box-shadow:var(--shadow)}
-.navhint{position:fixed;right:16px;bottom:14px;z-index:60;font-size:11px;color:var(--ink-faint);
-  background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 11px;box-shadow:var(--shadow)}
-
-/* deck + slides */
-.deck{scroll-snap-type:y proximity}
-.slide{min-height:100vh;display:flex;align-items:center;justify-content:center;
-  padding:64px 40px;scroll-snap-align:start;position:relative;border-bottom:1px solid var(--line)}
-.slide-inner{width:100%;max-width:1120px;margin:0 auto;position:relative;z-index:2}
-.slide-no{position:absolute;top:22px;left:40px;font:700 12px/1 var(--mono);color:var(--ink-faint);
-  letter-spacing:.14em;z-index:3}
-.slide-no b{color:var(--orange)}
-.eyebrow{display:inline-flex;align-items:center;gap:9px;font:700 12px/1 var(--mono);
-  letter-spacing:.16em;text-transform:uppercase;color:var(--blue);margin-bottom:18px}
-.eyebrow::before{content:"";width:22px;height:2px;background:var(--orange);border-radius:2px}
-h1{font-size:clamp(34px,5.4vw,60px);font-weight:900;letter-spacing:-.025em;line-height:1.02}
-h2{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:-.02em;line-height:1.08}
-h3{font-size:18px;font-weight:700;letter-spacing:-.01em}
-.lead{font-size:clamp(16px,1.7vw,20px);color:var(--ink-soft);max-width:60ch;margin-top:14px}
-.muted{color:var(--ink-soft)} .small{font-size:13px} .mono{font-family:var(--mono)}
-.hand{font-family:var(--font);font-size:15px;font-style:italic;color:var(--ink-soft);line-height:1.4}
-.hr{height:1px;background:var(--line);border:0;margin:20px 0}
-
-/* reveal */
-.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
-.reveal.in{opacity:1;transform:none}
-
-/* generic blocks */
-.grid{display:grid;gap:18px}
-.g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-  padding:20px;box-shadow:var(--shadow)}
-.card h3{margin-bottom:6px}
-.tag{display:inline-flex;align-items:center;gap:6px;font:700 11px/1 var(--mono);letter-spacing:.08em;
-  text-transform:uppercase;padding:5px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink-soft)}
-.tag.doc{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent);background:var(--green-soft)}
-.tag.inf{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 40%,transparent);background:var(--amber-soft)}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-
-/* KPIs */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;box-shadow:var(--shadow)}
-.kpi .n{font:800 15px/1.1 var(--font);color:var(--blue);display:flex;gap:8px;align-items:center}
-.kpi .d{font-size:12.5px;color:var(--ink-soft);margin-top:7px}
-.kpi .ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--orange-soft);color:var(--orange);font-size:14px;flex:0 0 auto}
-
-/* assumptions */
-.alist{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
-.alist .it{display:flex;gap:11px;align-items:flex-start;font-size:14px}
-.alist .k{flex:0 0 auto;width:24px;height:24px;border-radius:7px;background:var(--blue);color:#fff;
-  font:700 12px/24px var(--mono);text-align:center}
-.alist .it b{color:var(--ink)}
-.alist .it span{color:var(--ink-soft)}
-
-/* API */
-.apitable{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
-.apitable th,.apitable td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
-.apitable th{background:var(--surface-2);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
-.apitable tr:last-child td{border-bottom:0}
-.apitable td.m{font-family:var(--mono);color:var(--blue);white-space:nowrap}
-code,.code{font-family:var(--mono);font-size:12.5px}
-.codeblock{background:var(--blue-deep);color:#D8E6FF;border-radius:var(--radius-sm);padding:14px 16px;
-  font-family:var(--mono);font-size:12px;line-height:1.6;overflow:auto;border:1px solid rgba(255,255,255,.08)}
-.codeblock .c{color:#7FA8E6} .codeblock .k{color:#FFC08A} .codeblock .s{color:#8FE3B8}
-
-/* flow */
-.legend{display:flex;gap:16px;flex-wrap:wrap;margin:4px 0 14px;font-size:12.5px;color:var(--ink-soft)}
-.legend span{display:inline-flex;align-items:center;gap:7px}
-/* custom flow map */
-.flowmap{display:flex;flex-direction:column;gap:11px;margin-top:8px}
-.frow{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap}
-.fstep{flex:1;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--ink-soft);
-  border-radius:12px;padding:11px 12px 10px;position:relative;box-shadow:var(--shadow);min-width:0}
-.fstep .fn{position:absolute;top:-11px;left:11px;width:21px;height:21px;border-radius:50%;background:var(--ink);
-  color:#fff;font:800 11px/21px var(--mono);text-align:center}
-.fstep .ft{font-size:12.5px;font-weight:800;color:var(--ink);line-height:1.18;margin-top:5px}
-.fstep .fapi{font:600 9.5px/1.3 var(--mono);letter-spacing:.02em;color:var(--ink-soft);margin-top:5px;text-transform:uppercase}
-.fstep .fa{display:inline-flex;align-items:center;gap:5px}
-.fstep .fa::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
-.fstep.user{border-top-color:var(--blue)} .fstep.user .fapi{color:var(--blue)}
-.fstep.ag{border-top-color:var(--green)} .fstep.ag .fapi{color:var(--green)}
-.fstep.be{border-top-color:var(--orange)} .fstep.be .fapi{color:var(--orange)}
-.fstep.de{border-top-color:var(--ink-soft);background:var(--surface-2)}
-.fstep.de .ft::before{content:"◇ ";color:var(--ink-soft)}
-.fstep.ok{border-top-color:var(--green);background:var(--green-soft)}
-.farr{display:flex;align-items:center;justify-content:center;width:24px;flex:0 0 auto;color:var(--ink-faint)}
-.farr svg{width:18px;height:12px}
-.farr .ln{stroke:var(--ink-faint);stroke-width:2;stroke-dasharray:4 3;animation:march 1s linear infinite}
-@keyframes march{to{stroke-dashoffset:-14}}
-.fwrap{display:flex;justify-content:flex-end;align-items:center;gap:7px;color:var(--ink-faint);font:600 10px/1 var(--mono);padding-right:6px}
-.fexits{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
-.fexit{border:1px dashed var(--line);border-radius:10px;padding:9px 11px;font-size:11.5px;color:var(--ink-soft);background:var(--surface)}
-.fexit b{color:var(--ink)}
-.fexit.stop{border-color:color-mix(in srgb,var(--red) 45%,transparent);background:var(--red-soft)}
-.fexit.stop b{color:var(--red)}
-.fexit.warn{border-color:color-mix(in srgb,var(--amber) 45%,transparent);background:var(--amber-soft)}
-.fexit.warn b{color:var(--amber)}
-.fexit.ok{border-color:color-mix(in srgb,var(--green) 45%,transparent);background:var(--green-soft)}
-.fexit.ok b{color:var(--green)}
-
-/* IA tree */
-.tree{font-family:var(--mono);font-size:12.5px;line-height:1.75;background:var(--surface);
-  border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);
-  color:var(--ink-soft);white-space:pre;overflow:auto}
-.tree b{color:var(--ink)} .tree .hi{color:var(--orange);font-weight:700} .tree .bl{color:var(--blue);font-weight:700}
-
-/* ===== PHONE WIREFRAMES ===== */
-.wf-slide .slide-inner{max-width:1180px}
-.appshots{display:flex;gap:20px;justify-content:center;align-items:flex-end;flex-wrap:wrap}
-.shotwrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-.shotwrap .cap{font:700 11px/1 var(--mono);letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase}
-.appshot{height:474px;width:auto;display:block}
-.appshot.pair{height:452px}
-.appshot.edge{height:360px}
-.skinlabel{display:inline-flex;align-items:center;gap:6px;font:700 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;
-  padding:5px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink-soft)}
-.wf-grid{display:grid;grid-template-columns:auto 1fr;gap:34px;align-items:start}
-.phones{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
-.phonewrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-.phonewrap .cap{font:700 11px/1 var(--mono);letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase}
-.phone{width:258px;background:#0b1320;border-radius:34px;padding:9px;box-shadow:var(--shadow-lg);flex:0 0 auto}
-.scr{background:var(--surface-2);border-radius:26px;overflow:hidden;height:530px;display:flex;flex-direction:column;position:relative;border:1px solid rgba(0,0,0,.06)}
-.statusbar{height:26px;background:var(--blue-deep);color:#cfe0ff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font:600 10px/1 var(--mono)}
-.statusbar .notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:62px;height:5px;border-radius:3px;background:#0b1320}
-.appbar{background:var(--blue);color:#fff;padding:11px 14px;display:flex;align-items:center;gap:10px}
-.appbar .bk{font-size:15px;opacity:.9}
-.appbar .ttl{font-weight:700;font-size:14px}
-.appbar .sp{margin-left:auto;opacity:.85;font-size:13px}
-.body{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface-2)}
-.ctabar{padding:10px 12px;background:var(--surface);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:7px}
-.botnav{height:46px;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;color:var(--ink-faint);font-size:9px}
-.botnav .bn{display:flex;flex-direction:column;align-items:center;gap:2px}
-.botnav .bn.on{color:var(--blue)} .botnav .bn .ic{font-size:14px}
-
-/* wireframe primitives */
-.wb{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px}
-.wl{height:8px;background:#e7ecf4;border-radius:4px}
-.wl.s{height:7px;width:60%} .wl.xs{height:6px;width:40%} .wl.lg{height:10px}
-.wtxt{font-size:11px;color:var(--ink-soft);line-height:1.35}
-.wtxt.b{color:var(--ink);font-weight:700;font-size:12px}
-.wh{font-size:13px;font-weight:800;color:var(--ink)}
-.wrow{display:flex;gap:8px;align-items:center}
-.wrow.sb{justify-content:space-between}
-.wimg{background:linear-gradient(135deg,#d6e0f0,#eef3fb);border-radius:9px;position:relative;overflow:hidden;flex:0 0 auto}
-.wimg::after{content:"";position:absolute;inset:0;background:
-  linear-gradient(45deg,transparent 46%,rgba(30,79,163,.18) 47% 53%,transparent 54%),
-  linear-gradient(-45deg,transparent 46%,rgba(30,79,163,.18) 47% 53%,transparent 54%)}
-.wchip{font:700 9.5px/1 var(--mono);letter-spacing:.04em;padding:4px 7px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-soft);text-transform:uppercase;white-space:nowrap;display:inline-flex;align-items:center}
-.wrow{flex-wrap:wrap}
-.wchip.ok{background:var(--green-soft);color:var(--green);border-color:color-mix(in srgb,var(--green) 35%,transparent)}
-.wchip.warn{background:var(--amber-soft);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 35%,transparent)}
-.wchip.bad{background:var(--red-soft);color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
-.wchip.bl{background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);border-color:color-mix(in srgb,var(--blue) 30%,transparent)}
-.wbtn{border-radius:10px;padding:10px;text-align:center;font-weight:800;font-size:12.5px;border:1px solid var(--line);background:#fff;color:var(--ink)}
-.wbtn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
-.wbtn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
-.wbtn.danger{background:var(--red);border-color:var(--red);color:#fff}
-.wbtn.ghost{background:transparent}
-.wseg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px}
-.wseg div{flex:1;text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-faint);padding:6px;border-radius:7px}
-.wseg div.on{background:#fff;color:var(--blue);box-shadow:var(--shadow)}
-.wfield{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:11px;color:var(--ink-faint);background:#fff;display:flex;align-items:center;gap:8px}
-.wnum{display:flex;flex-direction:column;gap:5px;background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:10px}
-.wnum .r{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-soft)}
-.wnum .r.tot{font-weight:800;font-size:14px;color:var(--ink);border-top:1px solid var(--line);padding-top:6px}
-.wnum .r.tot b{color:var(--green)}
-.ring{--p:62;width:40px;height:40px;border-radius:50%;flex:0 0 auto;
-  background:conic-gradient(var(--orange) calc(var(--p)*1%), var(--line) 0);display:grid;place-items:center;position:relative}
-.ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--surface)}
-.ring span{position:relative;font:800 9px/1 var(--mono);color:var(--orange)}
-.bio{width:52px;height:52px;border-radius:50%;border:2px solid var(--blue);display:grid;place-items:center;color:var(--blue);font-size:22px;margin:4px auto}
-.spin{width:40px;height:40px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--orange);margin:6px auto;animation:spin 1s linear infinite}
-.check{width:54px;height:54px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:28px;margin:4px auto}
-.center{align-items:center;justify-content:center;text-align:center}
-
-/* lenses */
-.lenses{display:grid;gap:12px}
-.lens{border:1px solid var(--line);border-left-width:4px;border-radius:12px;padding:13px 15px;background:var(--surface);box-shadow:var(--shadow)}
-.lens h4{font:800 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.lens p{font-size:12.8px;color:var(--ink-soft);line-height:1.5}
-.lens.design{border-left-color:var(--design)} .lens.design h4{color:var(--design)}
-.lens.dev{border-left-color:var(--dev)} .lens.dev h4{color:var(--dev)}
-.lens.biz{border-left-color:var(--biz)} .lens.biz h4{color:var(--biz)}
-.lens .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px}
-.lens.design .ic{background:color-mix(in srgb,var(--design) 15%,transparent)}
-.lens.dev .ic{background:color-mix(in srgb,var(--dev) 15%,transparent)}
-.lens.biz .ic{background:color-mix(in srgb,var(--biz) 15%,transparent)}
-.lens code{color:var(--blue);background:var(--surface-2);padding:1px 4px;border-radius:4px;font-size:11.5px}
-
-/* branches */
-.branches{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.branch{border:1px solid var(--line);border-top-width:4px;border-radius:12px;padding:9px 11px;background:var(--surface);box-shadow:var(--shadow)}
-.branch h4{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:7px}
-.branch .amt{font:800 15px/1 var(--font);margin:3px 0}
-.branch p{font-size:11px;color:var(--ink-soft);line-height:1.4}
-.branch.free{border-top-color:var(--green)} .branch.free .amt{color:var(--green)}
-.branch.partial{border-top-color:var(--amber)} .branch.partial .amt{color:var(--amber)}
-.branch.nonref{border-top-color:var(--red)} .branch.nonref .amt{color:var(--red)}
-
-/* edge grid */
-.edge{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.mini{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
-.mini .top{padding:9px 11px;font:800 11px/1.2 var(--font);color:#fff;display:flex;align-items:center;gap:7px}
-.mini.e1 .top{background:var(--red)} .mini.e2 .top{background:var(--ink-soft)}
-.mini.e3 .top{background:var(--amber)} .mini.e4 .top{background:var(--blue)}
-.mini .in{padding:12px;display:flex;flex-direction:column;gap:8px;min-height:150px}
-
-/* cover */
-.cover{background:radial-gradient(1200px 600px at 78% -10%,rgba(245,130,32,.14),transparent 60%),
-  radial-gradient(900px 600px at 10% 110%,rgba(30,79,163,.16),transparent 55%);overflow:hidden}
-.cover .lines{position:absolute;inset:0;z-index:1;opacity:.5}
-.cover .lines i{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--line) 20% 80%,transparent)}
-.cover-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center}
-.badge{display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);
-  border-radius:999px;padding:8px 14px;box-shadow:var(--shadow);font-weight:700;font-size:13px}
-.badge .b{width:22px;height:22px;border-radius:6px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900}
-.credits{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
-.credits .m{font-size:12.5px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
-.cover .phone{transform:rotate(3deg)}
-
-@keyframes drift{from{transform:translateY(0)}to{transform:translateY(18px)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
-.breathe{animation:pulse 3.6s ease-in-out infinite}
-
-@media (max-width:900px){
-  .cover-grid,.g2,.g3,.g4,.alist{grid-template-columns:1fr}
-  .kpis,.branches,.edge{grid-template-columns:repeat(2,1fr)}
-  .wf-grid{grid-template-columns:1fr}
-  .slide{padding:54px 20px}
-  .slide-no{left:20px}
-}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
-
-/* print → PDF */
-@media print{
-  @page{size:1280px 820px;margin:0}
-  html,body{background:#fff}
-  .topbar,.hud,.counter,.navhint{display:none!important}
-  .deck{scroll-snap-type:none}
-  .slide{min-height:auto;height:812px;page-break-after:always;break-after:page;border-bottom:0;padding:46px 46px}
-  .slide:last-child{page-break-after:auto}
-  .reveal{opacity:1!important;transform:none!important}
-  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .phone{box-shadow:none;border:1px solid var(--line)}
-  .card,.kpi,.lens,.mini,.mermaid,.tree{box-shadow:none}
-}
-</style>
-</head>
-<body>
-<div class="topbar"><i id="prog"></i></div>
-<div class="hud">
-  <button id="theme">◐ Theme</button>
-  <button id="print">⤓ PDF</button>
-</div>
-<div class="counter"><span id="cur">01</span> / <span id="tot">13</span></div>
-<div class="navhint">↑ ↓ to navigate</div>
-
-<main class="deck" id="deck">
-
-<!-- 1 COVER -->
-<section class="slide cover" data-title="Cover">
-  <div class="lines" aria-hidden="true"></div>
-  <div class="slide-inner">
-    <div class="cover-grid">
-      <div>
-        <div class="badge reveal"><span class="b">V</span> Voya × Agoda &nbsp;·&nbsp; Android</div>
-        <h1 class="reveal" style="margin-top:20px">Designing the hotel<br><span style="color:var(--blue)">cancellation</span> flow.</h1>
-        <p class="lead reveal">A self-serve cancellation experience for an Android hotel-booking app, built on Agoda's Demand API, with one promise to the traveller: <b style="color:var(--ink)">no surprises about the refund.</b></p>
-        <div class="hand reveal" style="margin-top:14px">You always see the exact refund before you confirm. No surprises.</div>
-        <div class="credits reveal">
-          <span class="m">PM101 · Mid-Course Case</span>
-          <span class="m">Masters' Union</span>
-          <span class="m">Oct 25, 2026</span>
-          <span class="m" style="border-color:color-mix(in srgb,var(--orange) 45%,transparent);color:var(--ink)"><b style="color:var(--orange)">▶ Live:</b> agoda-cancellation-flow.vercel.app</span>
-        </div>
-        <div class="credits reveal" style="margin-top:8px">
-          <span class="m" style="border-color:color-mix(in srgb,var(--blue) 35%,transparent);color:var(--ink)"><b>Om Umrania</b></span>
-          <span class="m">Param Parekh</span>
-          <span class="m">Shabareesh Parlakota</span>
-          <span class="m">Arushi Gupta</span>
-          <span class="m">Manya Mahajan</span>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:center" class="reveal">
-        <img class="appshot" style="height:506px" src="../wireframes/screens/app-ios-03-preview.png" alt="Refund preview on iPhone">
-      </div>
-    </div>
+html,body{background:#d9d9d9}
+body{font-family:Inter,"Helvetica Neue",Arial,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;background:#fff;page-break-after:always;break-after:page;padding:26px 40px 34px}
+.slide h1{font-size:25px;font-weight:700;letter-spacing:-.2px;line-height:1.15}
+.slide .sub{font-size:12.5px;color:#555;margin-top:4px}
+.hd{border-bottom:1.5px solid #111;padding-bottom:8px;margin-bottom:12px}
+.ft{position:absolute;left:40px;right:40px;bottom:12px;display:flex;justify-content:space-between;font-size:9.5px;color:#777}
+.tag{font-family:"DejaVu Sans Mono",monospace;font-size:.88em;font-weight:600;background:#eee;border:1px solid #bbb;border-radius:3px;padding:0 3px;white-space:nowrap}
+code{font-family:"DejaVu Sans Mono",monospace;font-size:.86em;background:#f0f0f0;border-radius:3px;padding:0 2px}
+a{color:#111}
+/* notes */
+.note{border-left:3px solid #111;padding:2px 0 2px 7px;margin-top:6px;line-height:1.34}
+.note b{display:block;font-size:.82em;letter-spacing:.04em;text-transform:uppercase;color:#444}
+.note.dev{border-left-color:#666}.note.biz{border-left-color:#aaa}
+.wfhead{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
+.wfhead .code{background:#111;color:#fff;font-weight:700;font-size:12px;border-radius:3px;padding:1px 6px}
+.wfhead .t{font-weight:700;font-size:13.5px}
+.wfhead .fx{font-size:10px;color:#666}
+/* phone */
+.pw{position:relative;flex:none}
+.ph{width:240px;height:480px;transform-origin:0 0;position:absolute;left:0;top:0;background:#fafafa;border:3px solid #222;border-radius:22px;overflow:hidden;font-size:11.5px;line-height:1.3;display:flex;flex-direction:column}
+.sb{height:20px;display:flex;justify-content:space-between;align-items:center;padding:0 12px;font-size:9.5px;font-weight:600;background:#eee;flex:none}
+.ab{height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:700;font-size:13.5px;border-bottom:1px solid #ccc;background:#fff;flex:none}
+.ab .bk{font-size:15px;font-weight:400}
+.body{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:7px;overflow:hidden}
+.card{border:1px solid #bbb;background:#fff;border-radius:6px;padding:7px 8px}
+.card.g{background:#eee}
+.imgp{background:repeating-linear-gradient(45deg,#e4e4e4,#e4e4e4 5px,#efefef 5px,#efefef 10px);border:1px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#888;font-size:9px}
+.btn{height:34px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;border:1.5px solid #222;background:#fff;flex:none}
+.btn.p{background:#222;color:#fff}
+.btn.d{background:#9b2c2c;border-color:#9b2c2c;color:#fff}
+.btn.dis{border-color:#bbb;color:#aaa;background:#f0f0f0}
+.lnk{text-align:center;text-decoration:underline;font-size:11px;color:#333}
+.kv{display:flex;justify-content:space-between;gap:6px}
+.kv.big{font-weight:700;font-size:13.5px}
+.muted{color:#666;font-size:10.5px}
+.sm{font-size:10px}
+.hr{height:1px;background:#ddd}
+.bar{height:8px;border-radius:4px;background:#ddd}
+.spin{width:34px;height:34px;border-radius:50%;border:4px solid #ddd;border-top-color:#333;margin:6px auto}
+.nav{height:42px;display:flex;border-top:1px solid #ccc;background:#fff;flex:none}
+.nav div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9.5px;color:#777;gap:2px}
+.nav div.on{color:#111;font-weight:700}
+.nav i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;display:block}
+.gest{height:14px;display:flex;justify-content:center;align-items:center;flex:none;background:#fff}
+.gest span{width:70px;height:3px;background:#555;border-radius:2px}
+.tabs{display:flex;border-bottom:1px solid #ccc;font-size:10.5px}
+.tabs div{padding:5px 8px;color:#777}.tabs div.on{color:#111;font-weight:700;border-bottom:2px solid #111}
+.radio{display:flex;align-items:center;gap:6px;font-size:10.5px}
+.radio i{width:11px;height:11px;border-radius:50%;border:1.5px solid #333;display:block;flex:none}
+.radio.on i{background:radial-gradient(#222 45%,#fff 50%)}
+.chk{display:flex;gap:6px;align-items:flex-start;font-size:10px}
+.chk i{width:11px;height:11px;border:1.5px solid #333;display:block;flex:none;margin-top:1px}
+.pill{display:inline-block;white-space:nowrap;flex:none;align-self:flex-start;border:1px solid #888;border-radius:10px;padding:0 6px;font-size:9.5px;background:#fff}
+.pill.dk{background:#222;color:#fff;border-color:#222}
+.warn{border:1.5px solid #9b2c2c;background:#fbf1f1;border-radius:6px;padding:6px 8px;font-size:10.5px}
+table.t{border-collapse:collapse;width:100%}
+table.t th{background:#111;color:#fff;text-align:left;font-size:10.5px;padding:4px 6px}
+table.t td{border-bottom:1px solid #ccc;padding:4px 6px;vertical-align:top}
+.col{display:flex;flex-direction:column}
+.box{border:1px solid #aaa;border-radius:6px;padding:9px 11px;background:#fafafa}
+.box h3{font-size:13px;margin-bottom:5px}
+.box ul{padding-left:15px}.box li{margin-bottom:3px}
+.prose{font-family:Charter,"Bitstream Charter",Georgia,serif;font-size:13.4px;line-height:1.52;color:#1a1a1a;columns:1}
+.prose h2{font-family:Inter,sans-serif;font-size:16px;margin:14px 0 4px}
+.prose p{margin-bottom:7px}
+</style></head><body><section class="slide "><div class="hd"><h1>Hotel booking cancellation: Android app</h1><div class="sub">Wireframes, information architecture and logic flow for Voya, built on Agoda's Demand APIs</div></div><div style="display:flex;gap:36px;margin-top:6px">
+  <div style="flex:1.25;font-size:16.5px;line-height:1.5">
+   <div class="box" style="margin-bottom:12px"><h3>The problem</h3>Voya sells hotel rooms that come from Agoda. When a traveler needs to cancel, they want to know what it will cost and whether the cancellation went through. Voya does not set the refund; it has to ask Agoda, show the answer clearly, and recover safely when a call is slow or fails.</div>
+   <div class="box" style="margin-bottom:12px"><h3>User goal</h3>Cancel a confirmed booking from the app, see the estimated refund before agreeing, and know the result.</div>
+   <div class="box" style="margin-bottom:12px"><h3>Voya context</h3>An early-stage Android app with no direct hotel contracts. Hotel content and prices come from Agoda. Voya books on the traveler's behalf and, we assume, takes payment and handles service after the sale (Agoda's Partner Fulfillment model).</div>
+   <div class="box"><h3>Data in this document</h3>Hotels, prices, dates and booking IDs are simulated test data, not real reservations or live Agoda responses. The demo date is Sunday 25 October 2026.</div>
   </div>
-</section>
-
-<!-- 2 WHY -->
-<section class="slide" data-title="Why it matters">
-  <div class="slide-no">0<b>2</b> · CONTEXT</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Why this moment matters</div>
-    <h2 class="reveal">The most anxious step in travel, and our best chance to earn trust.</h2>
-    <div class="grid g3 reveal" style="margin-top:26px">
-      <div class="card"><h3>😣 The problem</h3><p class="muted small" style="margin-top:6px">Users can book in Voya but can't <b>cancel</b> in Voya. When plans change they call support or dispute with their bank, cost, chargebacks, churn, and a lost trust moment.</p></div>
-      <div class="card"><h3>🎯 The goal</h3><p class="muted small" style="margin-top:6px">Let users cancel themselves, seeing <b>exactly</b> what they'll be refunded and when, <i>before</i> they commit. The refund shown is the refund paid.</p></div>
-      <div class="card" style="border-color:color-mix(in srgb,var(--orange) 40%,transparent)"><h3 style="color:var(--orange)">★ North star</h3><p class="muted small" style="margin-top:6px"><b>"No surprises."</b> Transparency over optimism, we trade a few completed cancellations for far fewer disputes and far more repeat bookings.</p></div>
-    </div>
-    <div class="hr reveal"></div>
-    <div class="eyebrow reveal" style="color:var(--biz)">How we'll know it worked</div>
-    <div class="kpis reveal">
-      <div class="kpi"><div class="n"><span class="ico">↗</span> Self-serve rate</div><div class="d">Share of cancellations done in-app without support.</div></div>
-      <div class="kpi"><div class="n"><span class="ico">↘</span> Tickets &amp; disputes</div><div class="d">Cancellation tickets and refund chargebacks fall.</div></div>
-      <div class="kpi"><div class="n"><span class="ico">◎</span> Preview drop-off</div><div class="d">Where trust breaks, the screen that matters most.</div></div>
-      <div class="kpi"><div class="n"><span class="ico">↺</span> Rebooking rate</div><div class="d">Revenue recovered right after a cancellation.</div></div>
-    </div>
+  <div style="flex:1;font-size:15px">
+   <div class="box"><h3>What is in this document</h3>
+   <table class="t" style="font-size:14.5px"><tbody>
+   <tr><td><b>2</b></td><td>Scope, assumptions, evidence legend</td></tr>
+   <tr><td><b>3</b></td><td>Information architecture</td></tr>
+   <tr><td><b>4</b></td><td>Logic and information flow, four lanes</td></tr>
+   <tr><td><b>5 to 10</b></td><td>Wireframes A to P with design, developer and business notes</td></tr>
+   <tr><td><b>11</b></td><td>API-to-screen map and key scenarios</td></tr>
+   <tr><td><b>12, 13</b></td><td>Product note</td></tr></tbody></table></div>
+   <div class="box" style="margin-top:12px"><h3>Course and team</h3>PM101 Mid-Course case, Masters' Union, October 2026.<br>Team: Om Umrania, Param Parekh, Shabareesh Parlakota, Arushi Gupta, Manya Mahajan.</div>
+  </div></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>1 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Scope, assumptions and evidence legend</h1><div class="sub">Every claim on later pages is tagged so it can be traced to Agoda's documentation or to a Voya decision</div></div><div style="display:flex;gap:16px;font-size:13.6px;line-height:1.4">
+ <div class="col" style="flex:.8;gap:10px">
+  <div class="box"><h3>In scope (version 1)</h3><ul><li>Full cancellation of one confirmed booking, from My trips</li><li>Refund preview, final confirmation, result</li><li>Unknown outcome after a timeout</li><li>Fee waiver, only when permitted</li><li>Support route when the app cannot cancel</li></ul></div>
+  <div class="box"><h3>Out of scope</h3><ul><li>Date changes</li><li>Cancelling one room of several</li><li>No-show disputes</li><li>The payment system that returns money</li></ul></div>
+  <div class="box"><h3>Evidence legend</h3><div><span class="tag">D</span> Documented on the Agoda page cited</div><div style="margin-top:3px"><span class="tag">A</span> Voya assumption or design decision</div><div style="margin-top:3px"><span class="tag">V</span> Unclear or undocumented; validate with Agoda</div></div>
+ </div>
+ <div class="box" style="flex:1.5"><h3>Assumptions</h3>
+  <table class="t" style="font-size:13px"><tbody>
+  <tr><td><b>1</b></td><td>Voya uses Agoda's Partner Fulfillment model: Voya takes payment and handles service after booking. <span class="tag">A</span></td></tr>
+  <tr><td><b>2</b></td><td>Voya keeps its own booking reference beside Agoda's bookingId. My trips reads Voya's database, not Agoda directly. <span class="tag">A</span></td></tr>
+  <tr><td><b>3</b></td><td>Voya's Agoda account may call Cancel Preview, Cancel Confirm and fee waiver. <span class="tag">V</span></td></tr>
+  <tr><td><b>4</b></td><td>The cancellation policy from Search (cancellationDetail) is saved at booking and shown as a reminder only. Live Preview gives the quote. <span class="tag">D</span><span class="tag">A</span></td></tr>
+  <tr><td><b>5</b></td><td>In the examples the traveler paid what Agoda quotes: price and currency parity. No Voya markup, coupon or FX. <span class="tag">A</span></td></tr>
+  <tr><td><b>6</b></td><td>Voya's payment gateway sends the traveler's refund. Agoda does not document refund timing for this model. <span class="tag">A</span><span class="tag">V</span></td></tr>
+  <tr><td><b>7</b></td><td>The date a fee starts is separate from the date the API stops allowing cancellation. The latter is documented two ways (one day before check-in, or 12:00 AM on the check-in date). <span class="tag">V</span></td></tr>
+  <tr><td><b>8</b></td><td>Support can cancel by hand and receive a booking reference. Designed here, not built. <span class="tag">A</span></td></tr></tbody></table>
+ </div>
+ <div class="col" style="flex:1;gap:10px">
+  <div class="box"><h3>Illustrative data</h3>Sample Hotel, Bengaluru. Check-in Thu 10 Dec 2026, check-out Sat 12 Dec 2026. Voya ref VY-1042, paid ₹18,240. Fee-free until Mon 7 Dec 2026, 6:00 PM hotel time.<br><br>Three separate fixtures drive the refund screens: full refund ₹18,240 (VY-1042), partial ₹12,000 (VY-1057), none ₹0 (VY-1063). They are not three prices for one booking, and none is Agoda data.</div>
+  <div class="box" style="font-size:12px"><h3>Sources <span class="tag">D</span></h3>
+  developer.agoda.com/demand/docs/<br>
+  cancel-bookings<br>fee-waiver-cancellation<br>retrieve-bookings (Booking List and Detail)<br>json-search-api<br>appendix (error codes, statuses)<br>best-practices-certification-process</div>
+ </div>
+</div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>2 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Information architecture</h1><div class="sub">Navigation tree for cancellation. Screens are solid boxes, system checks are dashed</div></div><div style="margin-top:2px"><svg xmlns="http://www.w3.org/2000/svg" width="1200" height="545" viewBox="0 0 1200 545" font-family="Inter, Arial, sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#222"/></marker></defs><rect x="20" y="448" width="690" height="80" rx="8" fill="#f2f2f2" stroke="#999" stroke-dasharray="6 4"/><text x="32" y="465.5" font-size="10" font-weight="600" text-anchor="start" fill="#111"><tspan x="32" dy="0.0">Exception branch, shown only when isFeeWaiverAllowed and account permission allow it</tspan></text><rect x="480" y="8" width="220" height="36" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="590.0" y="30.2" font-size="12" font-weight="700" text-anchor="middle" fill="#111"><tspan x="590.0" dy="0.0">Voya Android app</tspan></text><rect x="70" y="76" width="220" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="180.0" y="93.4" font-size="11" font-weight="400" text-anchor="middle" fill="#111"><tspan x="180.0" dy="0.0">Search and hotel details</tspan><tspan x="180.0" dy="13.0">(from Agoda feed)</tspan></text><polyline points="590,44 590,60 180,60 180,76" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="480" y="76" width="220" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="590.0" y="99.8" font-size="11" font-weight="700" text-anchor="middle" fill="#111"><tspan x="590.0" dy="0.0">My trips</tspan></text><polyline points="590,44 590,60 590,60 590,76" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="930" y="76" width="220" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="1040.0" y="99.8" font-size="11" font-weight="400" text-anchor="middle" fill="#111"><tspan x="1040.0" dy="0.0">Account and help</tspan></text><polyline points="590,44 590,60 1040,60 1040,76" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="330" y="148" width="150" height="36" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="405.0" y="169.7" font-size="10.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="405.0" dy="0.0">Upcoming</tspan></text><polyline points="590,116 590,132 405,132 405,148" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="500" y="148" width="150" height="36" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="575.0" y="163.5" font-size="10.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="575.0" dy="0.0">Past</tspan><tspan x="575.0" dy="12.4">(no cancel)</tspan></text><polyline points="590,116 590,132 575,132 575,148" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="670" y="148" width="150" height="36" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="745.0" y="169.7" font-size="10.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="745.0" dy="0.0">Cancelled</tspan></text><polyline points="590,116 590,132 745,132 745,148" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="930" y="148" width="220" height="36" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="1040.0" y="169.7" font-size="10.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="1040.0" dy="0.0">Help and Contact support</tspan></text><polyline points="1040,116 1040,148" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="330" y="214" width="150" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="405.0" y="237.7" font-size="10.5" font-weight="700" text-anchor="middle" fill="#111"><tspan x="405.0" dy="0.0">Booking details (A, B)</tspan></text><polyline points="405,184 405,214" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="670" y="214" width="150" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="745.0" y="231.5" font-size="10.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="745.0" dy="0.0">Cancelled booking</tspan><tspan x="745.0" dy="12.4">details (O)</tspan></text><polyline points="745,184 745,214" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="300" y="282" width="210" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4" stroke-dasharray="5 3"/><text x="405.0" y="299.7" font-size="9.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="405.0" dy="0.0">System check: status,</tspan><tspan x="405.0" dy="11.2">eligibility, hotel-local date</tspan></text><polyline points="405,254 405,282" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><polyline points="510,292 670,255" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="600" y="265.0" font-size="8.5" font-weight="400" text-anchor="middle" fill="#222"><tspan x="600" dy="0.0">already cancelled</tspan></text><rect x="870" y="282" width="200" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="970.0" y="305.5" font-size="10" font-weight="400" text-anchor="middle" fill="#111"><tspan x="970.0" dy="0.0">Not cancellable in the app (N)</tspan></text><polyline points="510,306 870,306" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="690" y="303.0" font-size="8.5" font-weight="400" text-anchor="middle" fill="#222"><tspan x="690" dy="0.0">ineligible or too close to check-in</tspan></text><polyline points="1000,282 1000,184" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="1030" y="235.0" font-size="8.5" font-weight="400" text-anchor="middle" fill="#222"><tspan x="1030" dy="0.0">assisted</tspan></text><polyline points="360,322 360,350 125,350 125,372" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="240" y="347.0" font-size="8.5" font-weight="400" text-anchor="middle" fill="#222"><tspan x="240" dy="0.0">eligible: Cancel booking</tspan></text><rect x="30" y="372" width="190" height="44" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="125.0" y="391.5" font-size="10.5" font-weight="700" text-anchor="middle" fill="#111"><tspan x="125.0" dy="0.0">Review refund (C to F)</tspan><tspan x="125.0" dy="12.4">Cancel Preview</tspan></text><polyline points="220,394 250,394" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="250" y="372" width="180" height="44" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="340.0" y="391.6" font-size="10" font-weight="400" text-anchor="middle" fill="#111"><tspan x="340.0" dy="0.0">Reason and final review (G)</tspan><tspan x="340.0" dy="11.8">Keep or Yes, cancel</tspan></text><polyline points="430,394 460,394" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="460" y="372" width="130" height="44" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="525.0" y="391.5" font-size="10.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="525.0" dy="0.0">Sending (H)</tspan><tspan x="525.0" dy="12.4">Confirm</tspan></text><rect x="620" y="340" width="210" height="34" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="725.0" y="360.5" font-size="10" font-weight="400" text-anchor="middle" fill="#111"><tspan x="725.0" dy="0.0">Cancellation confirmed (I)</tspan></text><polyline points="590,394 605,394 605,357 620,357" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="620" y="385" width="210" height="34" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="725.0" y="405.5" font-size="10" font-weight="400" text-anchor="middle" fill="#111"><tspan x="725.0" dy="0.0">Outcome unknown (J)</tspan></text><polyline points="590,394 620,402" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="620" y="430" width="210" height="34" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="725.0" y="450.5" font-size="10" font-weight="400" text-anchor="middle" fill="#111"><tspan x="725.0" dy="0.0">Could not cancel (P)</tspan></text><polyline points="590,394 605,394 605,447 620,447" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="950" y="393.0" font-size="8.5" font-weight="400" text-anchor="start" fill="#111"><tspan x="950" dy="0.0">J and P lead to</tspan><tspan x="950" dy="10.0">recheck or support</tspan></text><polyline points="125,416 125,478" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="142" y="441.0" font-size="8.5" font-weight="400" text-anchor="start" fill="#222"><tspan x="142" dy="0.0">from F</tspan></text><rect x="30" y="478" width="190" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="125.0" y="501.7" font-size="10.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="125.0" dy="0.0">Request exception (K)</tspan></text><polyline points="220,498 250,498" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="250" y="478" width="190" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="345.0" y="501.7" font-size="10.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="345.0" dy="0.0">Pending, up to 72 h (L)</tspan></text><polyline points="440,498 470,498" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="470" y="478" width="230" height="40" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="585.0" y="501.5" font-size="10" font-weight="400" text-anchor="middle" fill="#111"><tspan x="585.0" dy="0.0">Outcome: accepted or declined (M)</tspan></text><rect x="780" y="470" width="130" height="24" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="845.0" y="485.3" font-size="9.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="845.0" dy="0.0">Screen</tspan></text><rect x="780" y="500" width="130" height="24" rx="5" fill="#fff" stroke="#222" stroke-width="1.4" stroke-dasharray="5 3"/><text x="845.0" y="515.3" font-size="9.5" font-weight="400" text-anchor="middle" fill="#111"><tspan x="845.0" dy="0.0">System check</tspan></text><text x="925" y="485.1" font-size="9" font-weight="400" text-anchor="start" fill="#111"><tspan x="925" dy="0.0">A screen the traveler sees</tspan></text><text x="925" y="515.1" font-size="9" font-weight="400" text-anchor="start" fill="#111"><tspan x="925" dy="0.0">A check Voya runs, no screen</tspan></text></svg></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>3 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Logic and information flow</h1><div class="sub">Who knows what, and when. Agoda calls are in the Agoda lane; everything else is Voya's own logic [A]</div></div><div><svg xmlns="http://www.w3.org/2000/svg" width="1200" height="448" viewBox="0 0 1200 448" font-family="Inter, Arial, sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#222"/></marker></defs><rect x="0" y="0" width="1200" height="112" fill="#f6f6f6" stroke="#999"/><rect x="0" y="0" width="88" height="112" fill="#222"/><text transform="translate(42,56.0) rotate(-90)" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Traveler</text><rect x="0" y="112" width="1200" height="112" fill="#fff" stroke="#999"/><rect x="0" y="112" width="88" height="112" fill="#222"/><text transform="translate(42,168.0) rotate(-90)" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Voya Android</text><rect x="0" y="224" width="1200" height="112" fill="#f6f6f6" stroke="#999"/><rect x="0" y="224" width="88" height="112" fill="#222"/><text transform="translate(42,280.0) rotate(-90)" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Voya backend</text><rect x="0" y="336" width="1200" height="112" fill="#fff" stroke="#999"/><rect x="0" y="336" width="88" height="112" fill="#222"/><text transform="translate(42,392.0) rotate(-90)" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Agoda</text><rect x="105.0" y="25.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="150.0" y="53.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="150.0" dy="0.0">1  Open</tspan><tspan x="150.0" dy="11.3">My trips</tspan></text><rect x="105.0" y="137.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="150.0" y="165.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="150.0" dy="0.0">2  Ask Voya</tspan><tspan x="150.0" dy="11.3">for booking</tspan></text><rect x="105.0" y="249.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="150.0" y="272.0" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="150.0" dy="0.0">3  Map Voya ID</tspan><tspan x="150.0" dy="11.3">to Agoda</tspan><tspan x="150.0" dy="11.3">bookingId</tspan></text><rect x="105.0" y="361.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="150.0" y="384.5" font-size="9" font-weight="400" text-anchor="middle" fill="#111"><tspan x="150.0" dy="0.0">4  Booking Detail:</tspan><tspan x="150.0" dy="10.6">status, policy,</tspan><tspan x="150.0" dy="10.6">isFeeWaiverAllowed</tspan></text><polyline points="150,87.0 150,137.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><polyline points="150,199.0 150,249.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><polyline points="150,311.0 150,361.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><polygon points="258,244.0 304.0,280.0 258,316.0 212.0,280.0" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="258" y="277.8" font-size="9.2" font-weight="600" text-anchor="middle" fill="#111"><tspan x="258" dy="0.0">Already</tspan><tspan x="258" dy="10.9">cancelled?</tspan></text><polyline points="195.0,384.0 258,384.0 258,316.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="228" y="381.0" font-size="8.5" font-weight="400" text-anchor="middle" fill="#222"><tspan x="228" dy="0.0">status</tspan></text><rect x="213.0" y="137.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="258.0" y="165.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="258.0" dy="0.0">Show Cancelled</tspan><tspan x="258.0" dy="11.3">status. Stop.</tspan></text><polyline points="258,244.0 258,199.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="266" y="241.2" font-size="9" font-weight="400" text-anchor="start" fill="#222"><tspan x="266" dy="0.0">yes</tspan></text><polygon points="366,244.0 412.0,280.0 366,316.0 320.0,280.0" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="366" y="277.8" font-size="9.2" font-weight="600" text-anchor="middle" fill="#111"><tspan x="366" dy="0.0">Self-service</tspan><tspan x="366" dy="10.9">allowed?</tspan></text><polyline points="304.0,280.0 320.0,280.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="313.0" y="277.1" font-size="9" font-weight="400" text-anchor="middle" fill="#222"><tspan x="313.0" dy="0.0">no</tspan></text><rect x="321.0" y="137.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="366.0" y="165.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="366.0" dy="0.0">Contact support</tspan><tspan x="366.0" dy="11.3">(assisted)</tspan></text><polyline points="366,244.0 366,199.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="374" y="241.2" font-size="9" font-weight="400" text-anchor="start" fill="#222"><tspan x="374" dy="0.0">no</tspan></text><rect x="429.0" y="137.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="474.0" y="160.0" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="474.0" dy="0.0">Booking details</tspan><tspan x="474.0" dy="11.3">with Cancel</tspan><tspan x="474.0" dy="11.3">booking</tspan></text><polyline points="412.0,280.0 474,280.0 474,199.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="422.0" y="277.1" font-size="9" font-weight="400" text-anchor="middle" fill="#222"><tspan x="422.0" dy="0.0">yes</tspan></text><rect x="429.0" y="25.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="474.0" y="53.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="474.0" dy="0.0">5  Tap Cancel</tspan><tspan x="474.0" dy="11.3">booking</tspan></text><polyline points="474,137.0 474,87.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="537.0" y="137.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="582.0" y="165.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="582.0" dy="0.0">Loading:</tspan><tspan x="582.0" dy="11.3">checking terms</tspan></text><polyline points="519.0,56.0 582,56.0 582,137.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="537.0" y="249.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="582.0" y="272.0" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="582.0" dy="0.0">6  Cancel Preview</tspan><tspan x="582.0" dy="11.3">request</tspan><tspan x="582.0" dy="11.3">{bookingId}</tspan></text><rect x="537.0" y="361.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="582.0" y="389.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="582.0" dy="0.0">7  Cancel Preview</tspan><tspan x="582.0" dy="11.3">(up to 120 s)</tspan></text><polyline points="582,199.0 582,249.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><polyline points="582,311.0 582,361.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><polygon points="690,244.0 736.0,280.0 690,316.0 644.0,280.0" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="690" y="277.8" font-size="9.2" font-weight="600" text-anchor="middle" fill="#111"><tspan x="690" dy="0.0">Preview</tspan><tspan x="690" dy="10.9">returned?</tspan></text><polyline points="627.0,392.0 690,392.0 690,316.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="633.0" y="404.0" font-size="8.5" font-weight="400" text-anchor="start" fill="#222"><tspan x="633.0" dy="0.0">reference, paymentRate,</tspan><tspan x="633.0" dy="10.0">refundRate, policy</tspan></text><rect x="645.0" y="137.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="690.0" y="160.0" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="690.0" dy="0.0">No quote shown.</tspan><tspan x="690.0" dy="11.3">Retry or</tspan><tspan x="690.0" dy="11.3">Contact support</tspan></text><polyline points="690,244.0 690,199.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="698" y="241.0" font-size="8.5" font-weight="400" text-anchor="start" fill="#222"><tspan x="698" dy="0.0">error or timeout</tspan></text><rect x="753.0" y="137.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="798.0" y="165.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="798.0" dy="0.0">8  Review: refund,</tspan><tspan x="798.0" dy="11.3">hotel, dates</tspan></text><polyline points="736.0,280.0 798,280.0 798,199.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="746.0" y="277.1" font-size="9" font-weight="400" text-anchor="middle" fill="#222"><tspan x="746.0" dy="0.0">yes</tspan></text><polygon points="798,20.0 844.0,56.0 798,92.0 752.0,56.0" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="798" y="53.8" font-size="9.2" font-weight="600" text-anchor="middle" fill="#111"><tspan x="798" dy="0.0">Keep or</tspan><tspan x="798" dy="10.9">cancel?</tspan></text><polyline points="798,137.0 798,92.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="746.0" y="53.9" font-size="8.8" font-weight="400" text-anchor="end" fill="#111"><tspan x="746.0" dy="0.0">Keep: stop,</tspan><tspan x="746.0" dy="10.4">no Agoda call</tspan></text><rect x="883.0" y="25.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="928.0" y="53.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="928.0" dy="0.0">9  Yes, cancel</tspan><tspan x="928.0" dy="11.3">booking</tspan></text><polyline points="844.0,56.0 883.0,56.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="864.0" y="53.0" font-size="8.5" font-weight="400" text-anchor="middle" fill="#222"><tspan x="864.0" dy="0.0">cancel</tspan></text><rect x="861.0" y="249.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="906.0" y="267.8" font-size="8.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="906.0" dy="0.0">10  Confirm with</tspan><tspan x="906.0" dy="10.1">bookingId, reference,</tspan><tspan x="906.0" dy="10.1">cancelReason,</tspan><tspan x="906.0" dy="10.1">refundRate</tspan></text><rect x="861.0" y="361.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="906.0" y="389.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="906.0" dy="0.0">11  Confirm</tspan><tspan x="906.0" dy="11.3">(up to 120 s)</tspan></text><polyline points="928,87.0 928,249.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><polyline points="906,311.0 906,361.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><polygon points="1014,244.0 1060.0,280.0 1014,316.0 968.0,280.0" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="1014" y="277.8" font-size="9.2" font-weight="600" text-anchor="middle" fill="#111"><tspan x="1014" dy="0.0">Confirm</tspan><tspan x="1014" dy="10.9">result?</tspan></text><polyline points="951.0,392.0 1014,392.0 1014,316.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><text x="957.0" y="404.0" font-size="8.5" font-weight="400" text-anchor="start" fill="#222"><tspan x="957.0" dy="0.0">200 empty, error,</tspan><tspan x="957.0" dy="10.0">or no reply</tspan></text><rect x="1077.0" y="249.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="1122.0" y="272.5" font-size="9" font-weight="400" text-anchor="middle" fill="#111"><tspan x="1122.0" dy="0.0">12  Recheck Booking</tspan><tspan x="1122.0" dy="10.6">Detail. Update</tspan><tspan x="1122.0" dy="10.6">Voya record.</tspan></text><polyline points="1060.0,280.0 1077.0,280.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="1077.0" y="361.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="1122.0" y="389.7" font-size="9.6" font-weight="400" text-anchor="middle" fill="#111"><tspan x="1122.0" dy="0.0">Booking Detail</tspan><tspan x="1122.0" dy="11.3">status</tspan></text><polyline points="1122,311.0 1122,361.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="1077.0" y="137.0" width="90" height="62" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="1122.0" y="160.7" font-size="8.8" font-weight="400" text-anchor="middle" fill="#111"><tspan x="1122.0" dy="0.0">13  Confirmed,</tspan><tspan x="1122.0" dy="10.4">unknown, or error</tspan><tspan x="1122.0" dy="10.4">(914: new Preview)</tspan></text><polyline points="1122,249.0 1122,199.0" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/></svg></div><div style="margin-top:8px;font-size:11px;font-weight:700">Fee waiver branch (conditional)</div><div><svg xmlns="http://www.w3.org/2000/svg" width="1120" height="64" viewBox="0 0 1120 64" font-family="Inter, Arial, sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#222"/></marker></defs><rect x="2" y="6" width="206" height="52" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="105.0" y="24.3" font-size="9.3" font-weight="400" text-anchor="middle" fill="#111"><tspan x="105.0" dy="0.0">Booking Detail shows</tspan><tspan x="105.0" dy="11.0">isFeeWaiverAllowed = true</tspan><tspan x="105.0" dy="11.0">and Voya has permission</tspan></text><polyline points="208,32 226,32" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="226" y="6" width="206" height="52" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="329.0" y="24.3" font-size="9.3" font-weight="400" text-anchor="middle" fill="#111"><tspan x="329.0" dy="0.0">Android shows: Ask whether the</tspan><tspan x="329.0" dy="11.0">cancellation fee can be waived</tspan><tspan x="329.0" dy="11.0">(K), with a reason</tspan></text><polyline points="432,32 450,32" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="450" y="6" width="206" height="52" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="553.0" y="24.3" font-size="9.3" font-weight="400" text-anchor="middle" fill="#111"><tspan x="553.0" dy="0.0">Backend sends Confirm with</tspan><tspan x="553.0" dy="11.0">requestingFeeWaiver: true,</tspan><tspan x="553.0" dy="11.0">feeWaiverReason, remark</tspan></text><polyline points="656,32 674,32" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="674" y="6" width="206" height="52" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="777.0" y="24.3" font-size="9.3" font-weight="400" text-anchor="middle" fill="#111"><tspan x="777.0" dy="0.0">Hotel decides (Agoda side).</tspan><tspan x="777.0" dy="11.0">Backend polls Booking Detail</tspan><tspan x="777.0" dy="11.0">feeWaiverStatus, up to 72 h</tspan></text><polyline points="880,32 898,32" fill="none" stroke="#222" stroke-width="1.3" marker-end="url(#ah)"/><rect x="898" y="6" width="206" height="52" rx="5" fill="#fff" stroke="#222" stroke-width="1.4"/><text x="1001.0" y="24.3" font-size="9.3" font-weight="400" text-anchor="middle" fill="#111"><tspan x="1001.0" dy="0.0">Accept or Reject shown (M).</tspan><tspan x="1001.0" dy="11.0">Anything else: support.</tspan><tspan x="1001.0" dy="11.0">Stop at check-in 12:00 AM</tspan></text></svg></div><div style="font-size:10px;color:#444;margin-top:2px">If Confirm gets no reply, step 12 runs before any retry. Preview and Confirm can each wait up to 120 s <span class="tag">D</span></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>4 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Wireframes A and B: My trips and Booking details</h1><div class="sub">Entry point and the place where cancellation starts</div></div><div style="display:flex;gap:30px"><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">A</span><span class="t">My trips</span><span class="fx">Fixture VY-1042 and VY-1051</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:259px;height:518px"><div class="ph" style="transform:scale(1.08)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span>My trips</span></div><div class="tabs"><div class="on">Upcoming</div><div>Past</div><div>Cancelled</div></div><div class="body"><div class="card"><div class="imgp" style="height:58px">hotel photo</div><b style="display:block;margin-top:5px">Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="kv" style="margin-top:3px"><span class="muted">Ref VY-1042</span><span class="pill">Confirmed</span></div></div><div class="card"><div class="imgp" style="height:58px">hotel photo</div><b style="display:block;margin-top:5px">Sample Hotel, Goa</b><div class="muted">15 – 17 Jan 2027 · 2 nights</div><div class="kv" style="margin-top:3px"><span class="muted">Ref VY-1051</span><span class="pill">Confirmed</span></div></div></div><div class="nav"><div class=""><i></i>Search</div><div class="on"><i></i>My trips</div><div class=""><i></i>Account</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:12.2px"><div class="note"><b>Design (UI/UX)</b>Upcoming trips come first. Each card carries hotel, dates, Voya reference and status so the right booking is easy to pick. Cancelled trips have their own tab.</div><div class="note dev"><b>Developer (API)</b><span class="tag">A</span> The list is read from Voya's own booking table, which stores Agoda's bookingId next to the Voya reference. <span class="tag">D</span> Booking List can look up bookings by recent window or partner tag, so Voya uses it to reconcile missing records, not to build this screen.</div><div class="note biz"><b>Business</b><span class="tag">A</span> Cancelling starts from a screen travelers already use. Because Voya owns the record, trips still show if Agoda is slow or unreachable.</div></div></div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">B</span><span class="t">Booking details</span><span class="fx">Fixture VY-1042</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:259px;height:518px"><div class="ph" style="transform:scale(1.08)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Booking details</span></div><div class="body"><div class="kv"><b style="font-size:13px">Sample Hotel, Bengaluru</b><span class="pill">Confirmed</span></div><div class="imgp" style="height:46px">hotel photo</div><div class="card"><div class="kv"><span>Check-in</span><span>Thu 10 Dec 2026</span></div><div class="kv"><span>Check-out</span><span>Sat 12 Dec 2026</span></div><div class="kv"><span>Guests</span><span>1 room, 2 adults</span></div><div class="kv"><span>Voya ref</span><span>VY-1042</span></div><div class="kv"><span>Paid</span><span>₹18,240</span></div></div><div class="card g"><b>Cancellation policy</b><div class="sm" style="margin-top:2px">Free cancellation until Mon 7 Dec 2026, 6:00 PM (hotel time). After that a fee applies.</div><div class="muted" style="margin-top:3px">Shown as saved when you booked. The exact refund is confirmed before you cancel.</div></div><div class="btn ">Cancel booking</div><div class="lnk">Contact support</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:12.2px"><div class="note"><b>Design (UI/UX)</b>Cancel booking is an outlined button, not red; red appears only on the final confirm. The policy and Contact support sit on the same screen.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Booking Detail gives status (BookingConfirmed here), the text cancellationPolicy and isFeeWaiverAllowed. <span class="tag">D</span> Search cancellationDetail, saved at booking, is the structured policy behind the reminder. <span class="tag">A</span> Cancel shows only when the status allows it.</div><div class="note biz"><b>Business</b>The policy line reminds travelers of the deadline before they ask for a refund. It is a reminder only; the amount comes from Preview on the next step.</div></div></div></div></div></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>5 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Wireframes C to F: Cancel Preview states</h1><div class="sub">Same screen skeleton; three separate test fixtures drive the amounts</div></div><div style="display:flex;gap:16px"><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">C</span><span class="t">Preview loading</span><span class="fx">any booking</span></div><div style="display:flex;justify-content:center"><div class="pw" style="width:178px;height:355px"><div class="ph" style="transform:scale(0.74)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Review cancellation</span></div><div class="body"><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1042</div></div><div class="spin"></div><div style="text-align:center;font-weight:600">Checking cancellation terms</div><div class="muted" style="text-align:center">We are checking with the hotel booking provider. This can take up to two minutes.</div><div class="bar" style="width:80%;margin:0 auto"></div><div class="bar" style="width:55%;margin:0 auto"></div><div style="flex:1"></div><div class="btn ">Back to booking</div></div><div class="gest"><span></span></div></div></div></div><div style="font-size:9.4px"><div class="note"><b>Design (UI/UX)</b>Hotel and dates appear at once, then a plain waiting message. No countdown, since we do not know how long it will take. Back to booking stays available.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Cancel Preview takes {bookingId} and may take up to 120 seconds. <span class="tag">A</span> The backend owns the wait and keeps the request state, so closing the app does not restart it.</div><div class="note biz"><b>Business</b>No amount is shown until Agoda answers. A guessed refund would be a promise Voya may not be able to keep.</div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">D</span><span class="t">Full refund</span><span class="fx">VY-1042</span></div><div style="display:flex;justify-content:center"><div class="pw" style="width:178px;height:355px"><div class="ph" style="transform:scale(0.74)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Review cancellation</span></div><div class="body"><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1042</div></div><div class="card"><div class="muted">Estimated refund</div><div style="font-size:21px;font-weight:700">₹18,240</div><div class="hr" style="margin:5px 0"></div><div class="kv"><span>You paid</span><span>₹18,240</span></div><div class="kv"><span>Cancellation fee</span><span>₹0</span></div></div><div class="card g sm">Free cancellation until Mon 7 Dec 2026, 6:00 PM (hotel time).</div><div style="flex:1"></div><div class="btn p">Continue</div><div class="btn ">Keep booking</div></div><div class="gest"><span></span></div></div></div></div><div style="font-size:9.4px"><div class="note"><b>Design (UI/UX)</b>Estimated refund is the largest figure and sits above Continue. Keep booking has equal weight so leaving is easy.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Preview returns cancellationSummary with refundRate, paymentRate, reference and cancellationPolicy. Store reference and refundRate for Confirm; do not recompute them on the phone. <span class="tag">A</span> Paid equals refund here only because we assume price parity.</div><div class="note biz"><b>Business</b><span class="tag">A/V</span> Assumes Voya refunds what Agoda quotes. A Voya fee, coupon or currency difference must be settled before the traveler confirms.</div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">E</span><span class="t">Partial refund</span><span class="fx">VY-1057</span></div><div style="display:flex;justify-content:center"><div class="pw" style="width:178px;height:355px"><div class="ph" style="transform:scale(0.74)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Review cancellation</span></div><div class="body"><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1057</div></div><div class="card"><div class="muted">Estimated refund</div><div style="font-size:21px;font-weight:700">₹12,000</div><div class="hr" style="margin:5px 0"></div><div class="kv"><span>You paid</span><span>₹18,240</span></div><div class="kv"><span>Cancellation fee</span><span>₹6,240</span></div></div><div class="card g sm">Cancelled after Mon 7 Dec 2026, 6:00 PM (hotel time): a fee of ₹6,240 applies.</div><div style="flex:1"></div><div class="btn p">Continue</div><div class="btn ">Keep booking</div></div><div class="gest"><span></span></div></div></div></div><div style="font-size:9.4px"><div class="note"><b>Design (UI/UX)</b>Same layout as the full-refund state, so travelers learn it once. Fee and refund are separate lines so the loss is visible before Continue.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> refundRate is lower than paymentRate. The fee line is the difference, computed for display only <span class="tag">A</span>. cancellationPolicy text explains why. Fixture VY-1057 with a simulated date after the penalty cutoff.</div><div class="note biz"><b>Business</b><span class="tag">A</span> ₹12,000 is an invented test value. Voya shows the quote as given; disputes go to support, not into this flow.</div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">F</span><span class="t">No refund, ₹0</span><span class="fx">VY-1063</span></div><div style="display:flex;justify-content:center"><div class="pw" style="width:178px;height:355px"><div class="ph" style="transform:scale(0.74)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Review cancellation</span></div><div class="body"><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1063</div></div><div class="card"><div class="muted">Estimated refund</div><div style="font-size:21px;font-weight:700">₹0</div><div class="hr" style="margin:5px 0"></div><div class="kv"><span>You paid</span><span>₹18,240</span></div><div class="kv"><span>Cancellation fee</span><span>₹18,240</span></div></div><div class="warn"><b>No refund for this booking.</b><div class="sm">This rate is non-refundable. You can still cancel, but no money will be returned. The full amount is kept.</div></div><div style="flex:1"></div><div class="btn p">Continue</div><div class="btn ">Keep booking</div><div class="lnk">Ask whether the cancellation fee can be waived</div></div><div class="gest"><span></span></div></div></div></div><div style="font-size:9.4px"><div class="note"><b>Design (UI/UX)</b>The screen says plainly that no money returns. Continue stays enabled because cancelling is still allowed. The waiver link appears only when it is permitted.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> refundRate of 0 can still be confirmed with the same Confirm call. <span class="tag">D</span> The waiver link needs isFeeWaiverAllowed from Booking Detail, plus account permission <span class="tag">V</span>. Fixture VY-1063.</div><div class="note biz"><b>Business</b>Showing ₹0 before Continue avoids a complaint after the fact. A zero refund is not the same as a booking that cannot be cancelled.</div></div></div></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>6 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Wireframes G and H: Final review and sending</h1><div class="sub">Reason is optional; no biometric prompt</div></div><div style="display:flex;gap:30px"><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">G</span><span class="t">Reason and final review</span><span class="fx">VY-1042</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:259px;height:518px"><div class="ph" style="transform:scale(1.08)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Review cancellation</span></div><div class="body"><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1042</div></div><div class="kv big"><span>Estimated refund</span><span>₹18,240</span></div><div class="muted">Why are you cancelling? (optional)</div><div class="radio on"><i></i>Prefer not to say</div><div class="radio"><i></i>Change of plans</div><div class="radio"><i></i>Booked by mistake</div><div class="radio"><i></i>Found a better price</div><div class="radio"><i></i>Other</div><div style="flex:1"></div><div class="btn d">Yes, cancel booking</div><div class="btn ">Keep booking</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:12.2px"><div class="note"><b>Design (UI/UX)</b>Reason is optional and defaults to Prefer not to say. Hotel, dates and refund repeat so the wrong stay is not cancelled. Yes, cancel booking is the only red button; Keep booking sits right under it. No biometric prompt.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Confirm body: bookingId, reference, cancelReason, remark (optional) and refundRate {currency, inclusive}, copied from the latest Preview. Send cancelReason 0 when skipped; use only documented values. <span class="tag">A</span> Button disables on tap.</div><div class="note biz"><b>Business</b>Reason data is useful later and never blocks cancelling. <span class="tag">A</span> Voya's own request deduplication stops double taps; it does not make Agoda's Confirm exactly-once.</div></div></div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">H</span><span class="t">Sending progress</span><span class="fx">VY-1042</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:259px;height:518px"><div class="ph" style="transform:scale(1.08)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span>Cancelling</span></div><div class="body"><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1042</div></div><div class="spin"></div><div style="text-align:center;font-weight:600">Sending your cancellation</div><div class="muted" style="text-align:center">We are checking with the hotel booking provider. This can take up to two minutes. You can leave this screen; we will keep going.</div><div style="flex:1"></div><div class="btn dis">Yes, cancel booking</div><div class="btn ">Go to My trips</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:12.2px"><div class="note"><b>Design (UI/UX)</b>Says which step is running, blocks a second tap and lets the traveler leave. The final button stays visible but disabled so nothing seems to have vanished.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Confirm may take up to 120 seconds. <span class="tag">A</span> The backend records that Confirm was sent before the call, so a closed app can recover by reading Booking Detail.</div><div class="note biz"><b>Business</b>The backend, not the screen, owns the request. A traveler who leaves cannot trigger a second cancellation.</div></div></div></div></div></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>7 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Wireframes I and J: Confirmed and outcome unknown</h1><div class="sub">Cancelling the booking and refunding the money are separate things</div></div><div style="display:flex;gap:30px"><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">I</span><span class="t">Cancellation confirmed</span><span class="fx">VY-1042</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:259px;height:518px"><div class="ph" style="transform:scale(1.08)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span>Cancellation confirmed</span></div><div class="body"><div style="text-align:center;font-size:26px;font-weight:700;border:2px solid #222;border-radius:50%;width:46px;height:46px;line-height:42px;margin:4px auto 0">&#10003;</div><div style="text-align:center;font-weight:700;font-size:14px">Cancellation confirmed</div><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1042</div><div class="kv" style="margin-top:3px"><span class="muted">Status</span><span class="pill dk">Cancelled</span></div></div><div class="card g sm"><b>Refund</b><div>₹18,240 will be returned to your original payment method. We will message you when it has been processed.</div></div><div style="flex:1"></div><div class="btn p">View booking</div><div class="btn ">Back to My trips</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:12.2px"><div class="note"><b>Design (UI/UX)</b>The headline says Cancelled and repeats hotel, dates and reference. Refund wording gives no number of days. View booking opens the cancelled record.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> A successful Confirm is HTTP 200 with an empty body. Voya then reads Booking Detail and shows this screen only when the status is cancelled. <span class="tag">V</span> Confirm the exact status value in the sandbox.</div><div class="note biz"><b>Business</b><span class="tag">A</span> Cancelling the booking and returning money are separate: the payment gateway sends the refund. Agoda does not document refund timing under Partner Fulfillment <span class="tag">V</span>.</div></div></div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">J</span><span class="t">Result not confirmed yet</span><span class="fx">after a timeout</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:259px;height:518px"><div class="ph" style="transform:scale(1.08)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span>Cancellation status</span></div><div class="body"><div style="text-align:center;font-size:24px;font-weight:700;border:2px solid #222;border-radius:50%;width:46px;height:46px;line-height:42px;margin:4px auto 0">?</div><div style="text-align:center;font-weight:700;font-size:14px">We couldn't confirm the result yet</div><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1042</div><div class="kv" style="margin-top:3px"><span class="muted">Status</span><span class="pill">Checking</span></div></div><div class="card g sm">Your booking may still be active. We are checking its status and will message you. <b>Please don't cancel again.</b></div><div style="flex:1"></div><div class="btn p">Back to My trips</div><div class="btn ">Contact support</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:12.2px"><div class="note"><b>Design (UI/UX)</b>Neither success nor failure. It says the booking may still be active, that we are checking, and asks the traveler not to cancel again. Support is one tap away.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> No reply in time does not mean cancelled. The backend reads Booking Detail first and asks for a fresh Preview only if the booking is still active. <span class="tag">A</span> Traveler is notified when the check finishes.</div><div class="note biz"><b>Business</b>Prevents duplicate cancellations and false cancelled messages. Support starts with the reference already attached.</div></div></div></div></div></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>8 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Wireframes K to M: Fee waiver request</h1><div class="sub">Conditional exception path. The hotel decides; nothing is promised</div></div><div style="display:flex;gap:14px"><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">K</span><span class="t">Request an exception</span><span class="fx">VY-1063</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:202px;height:403px"><div class="ph" style="transform:scale(0.84)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Request an exception</span></div><div class="body"><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1063</div></div><div class="sm"><b>Ask whether the cancellation fee can be waived.</b> The hotel will decide. There is no guarantee.</div><div class="muted">Reason (required)</div><div class="card sm" style="padding:5px 8px">Select a reason &nbsp;&#9662;</div><div class="muted">Note for the hotel (optional)</div><div class="card" style="height:42px"></div><div class="chk"><i></i><span>I understand the fee of ₹18,240 applies if the hotel says no.</span></div><div style="flex:1"></div><div class="btn p">Send request</div><div class="btn ">Back</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:10.1px"><div class="note"><b>Design (UI/UX)</b>Plain wording that the hotel decides. A required reason, an optional note and a checkbox so the traveler knows the fee stands if the hotel says no.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Confirm with requestingFeeWaiver true, feeWaiverReason and remark, only when isFeeWaiverAllowed. <span class="tag">V</span> Reason values differ between the guide and the Appendix; account permission may block it (error 924). <span class="tag">A</span> The cancellation goes with the request.</div><div class="note biz"><b>Business</b>The hotel carries the decision, not Voya, so copy must not promise a waiver. <span class="tag">V</span> Who tells the traveler when the answer arrives.</div></div></div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">L</span><span class="t">Pending</span><span class="fx">VY-1063</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:202px;height:403px"><div class="ph" style="transform:scale(0.84)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span>Exception request</span></div><div class="body"><div style="text-align:center;font-weight:700;font-size:14px;margin-top:4px">Waiting for the hotel</div><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1063</div></div><div class="card"><div class="kv"><span>Request</span><span><span class="pill">Pending</span></span></div><div class="kv"><span>Sent</span><span>to the hotel</span></div></div><div class="card g sm">The hotel decides whether to waive the fee. We will keep checking for up to 72 hours and message you when there is an answer.</div><div style="flex:1"></div><div class="btn p">Back to My trips</div><div class="btn ">Contact support</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:10.1px"><div class="note"><b>Design (UI/UX)</b>One clear status, Pending, and how long we will keep checking. No progress bar, because the hotel sets the pace.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Poll Booking Detail feeWaiverStatus for up to 72 hours, not past 12:00 AM on the check-in date. Sandbox hotel 42976 stays pending, then accepts after 24 hours. <span class="tag">V</span> Booking status while pending.</div><div class="note biz"><b>Business</b>Polling and messages cost engineering time, and the 72-hour limit is documented. Support gets the case if there is no answer.</div></div></div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">M</span><span class="t">Accepted or declined</span><span class="fx">VY-1063</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:202px;height:403px"><div class="ph" style="transform:scale(0.84)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span>Exception request</span></div><div class="body"><div class="muted">Two possible outcomes</div><div class="card"><span class="pill dk">Accepted</span><div class="sm" style="margin-top:3px"><b>The hotel waived the fee.</b> Your booking is cancelled. We will show your refund once it is confirmed.</div></div><div class="card"><span class="pill">Declined</span><div class="sm" style="margin-top:3px"><b>The hotel did not waive the fee.</b> The original terms apply: refund ₹0.</div></div><div class="card g sm">No answer, or a status we can't read: we send you to support with your booking reference.</div><div style="flex:1"></div><div class="btn p">View booking</div><div class="btn ">Contact support</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:10.1px"><div class="note"><b>Design (UI/UX)</b>Two outcomes in one panel, each stating what happens next. Accepted: fee waived. Declined: original terms. No celebration styling. Anything unreadable goes to support.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> feeWaiverStatus Accept or Reject. <span class="tag">V</span> The guide also lists Cancelled and AutoReject; the Appendix lists Timeout. Treat those as Ask support. Verify Booking Detail before saying cancelled.</div><div class="note biz"><b>Business</b><span class="tag">A</span> A declined waiver means the original terms stand. Confirm with Agoda that the booking stays cancelled in that case.</div></div></div></div></div></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>9 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Wireframes N to P: Cannot cancel, already cancelled, failure</h1><div class="sub">Three different decisions, not three error screens</div></div><div style="display:flex;gap:14px"><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">N</span><span class="t">Cannot cancel in app</span><span class="fx">VY-1042</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:202px;height:403px"><div class="ph" style="transform:scale(0.84)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Booking details</span></div><div class="body"><div class="kv"><b style="font-size:13px">Sample Hotel, Bengaluru</b><span class="pill">Confirmed</span></div><div class="card"><div class="kv"><span>Check-in</span><span>Thu 10 Dec 2026</span></div><div class="kv"><span>Voya ref</span><span>VY-1042</span></div></div><div class="warn"><b>We can't cancel this booking in the app.</b><div class="sm">Our support team can check what options are available. Have your booking reference ready.</div></div><div style="flex:1"></div><div class="btn p">Contact support</div><div class="btn ">Back to My trips</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:10.1px"><div class="note"><b>Design (UI/UX)</b>One sentence on what happened and a direct way to reach support. The error code is never shown. The reference is already on screen.</div><div class="note dev"><b>Developer (API)</b><span class="tag">A</span> Voya decides assisted cancellation from Booking Detail status or a check-in date too close to the cutoff. <span class="tag">V</span> The boundary: one day before check-in, or 12:00 AM on the check-in date. Support ticket creation is a design assumption.</div><div class="note biz"><b>Business</b>Manual cancellations use support time. Settling the cutoff with Agoda decides how many bookings end up here.</div></div></div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">O</span><span class="t">Already cancelled</span><span class="fx">VY-1042</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:202px;height:403px"><div class="ph" style="transform:scale(0.84)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span class=bk>&larr;</span><span>Booking details</span></div><div class="body"><div class="kv"><b style="font-size:13px">Sample Hotel, Bengaluru</b><span class="pill">Cancelled</span></div><div class="imgp" style="height:46px">hotel photo</div><div class="card"><div class="kv"><span>Check-in</span><span>Thu 10 Dec 2026</span></div><div class="kv"><span>Check-out</span><span>Sat 12 Dec 2026</span></div><div class="kv"><span>Guests</span><span>1 room, 2 adults</span></div><div class="kv"><span>Voya ref</span><span>VY-1042</span></div><div class="kv"><span>Paid</span><span>₹18,240</span></div></div><div class="card g sm"><b>This booking was cancelled.</b> Nothing more to do here.</div><div class="card g"><b>Cancellation policy</b><div class="sm" style="margin-top:2px">Free cancellation until Mon 7 Dec 2026, 6:00 PM (hotel time). After that a fee applies.</div><div class="muted" style="margin-top:3px">Shown as saved when you booked. The exact refund is confirmed before you cancel.</div></div><div class="btn ">Contact support</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:10.1px"><div class="note"><b>Design (UI/UX)</b>The Cancel button is gone and the status is at the top. Dates and policy remain for reference. Contact support is still there.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Booking Detail status BookingCancelled or BookingCancelledByCustomer means Preview and Confirm are not called. <span class="tag">A</span> Refund status shown here comes from Voya's own records.</div><div class="note biz"><b>Business</b>Saves needless API calls and avoids double-cancel confusion.</div></div></div></div></div><div style="flex:1;min-width:0"><div class="wfhead"><span class="code">P</span><span class="t">Could not cancel</span><span class="fx">VY-1042</span></div><div style="display:flex;gap:14px"><div class="pw" style="width:202px;height:403px"><div class="ph" style="transform:scale(0.84)"><div class="sb"><span>9:41</span><span>LTE &nbsp;100%</span></div><div class="ab"><span>Cancellation</span></div><div class="body"><div style="text-align:center;font-weight:700;font-size:14px;margin-top:4px">We couldn't cancel this booking</div><div class="card"><b>Sample Hotel, Bengaluru</b><div class="muted">10 – 12 Dec 2026 · 2 nights</div><div class="muted">1 room, 2 adults · Ref VY-1042</div></div><div class="card g sm">Your booking is still active. We checked just now. Nothing has been changed.</div><div class="sm muted">If the refund amount changed, we will show you the new amount before you confirm.</div><div style="flex:1"></div><div class="btn p">Try again</div><div class="btn ">Contact support</div></div><div class="gest"><span></span></div></div></div><div style="flex:1;min-width:0"><div style="font-size:10.1px"><div class="note"><b>Design (UI/UX)</b>States the booking is still active only because Booking Detail says so. Try again starts over with a new quote; support is the fallback.</div><div class="note dev"><b>Developer (API)</b><span class="tag">D</span> Retryable errors (HTTP 500, 429): recheck Booking Detail, then a fresh Preview. Refund mismatch 914: new Preview, show the new amount. Auth or permission errors (102, 401, 403): log, do not loop. <span class="tag">A</span> Travelers never see codes.</div><div class="note biz"><b>Business</b>Keeps operations alerts separate from traveler wording. Repeated failures move the booking to the assisted path.</div></div></div></div></div></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>10 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>API-to-screen map and key scenarios</h1><div class="sub">What each screen reads or sends, and the ten cases we chose to show</div></div><div style="display:flex;gap:18px">
+  <div style="flex:1.45"><table class="t" style="font-size:12.2px"><thead><tr><th>Screen</th><th>Source</th><th>Fields and notes</th><th>Evidence</th></tr></thead><tbody><tr><td><b>A</b></td><td>Voya booking table; Booking List to reconcile</td><td>Voya ref, Agoda bookingId, tag</td><td><span class="tag">A/D</span></td></tr><tr><td><b>B, O</b></td><td>Booking Detail; saved Search cancellationDetail</td><td>status, cancellationPolicy text, isFeeWaiverAllowed; structured policy</td><td><span class="tag">D</span></td></tr><tr><td><b>C to F</b></td><td>Cancel Preview</td><td>cancellationSummary: reference, paymentRate, refundRate, cancellationPolicy</td><td><span class="tag">D</span></td></tr><tr><td><b>G, H, I</b></td><td>Cancel Confirm, then Booking Detail</td><td>bookingId, reference, cancelReason, refundRate; HTTP 200 empty body</td><td><span class="tag">D</span></td></tr><tr><td><b>J</b></td><td>Booking Detail</td><td>status recheck before any retry</td><td><span class="tag">D/A</span></td></tr><tr><td><b>K to M</b></td><td>Confirm with requestingFeeWaiver; Booking Detail</td><td>feeWaiverReason, remark, feeWaiverStatus</td><td><span class="tag">D/V</span></td></tr><tr><td><b>N, P</b></td><td>Voya rules; documented errors</td><td>errorMessage id and subId (102, 914); support ticket is Voya&#x27;s</td><td><span class="tag">D/A</span></td></tr><tr><td><b>Refund payment</b></td><td>Voya payment gateway</td><td>not an Agoda call</td><td><span class="tag">A</span></td></tr></tbody></table>
+   <div class="box" style="margin-top:10px;font-size:12.2px"><h3>Open questions for Agoda <span class="tag">V</span></h3><ul><li>Cancellation cutoff: one day before check-in, or 12:00 AM on the check-in date</li><li>Fee-waiver reason values and status names differ between the guide and the Appendix</li><li>Whether the booking is cancelled while a waiver is pending</li><li>How and when the traveler's refund settles under Partner Fulfillment</li><li>Account permission for Preview, Confirm and fee waiver</li></ul></div>
   </div>
-</section>
-
-<!-- 3 ASSUMPTIONS -->
-<section class="slide" data-title="Assumptions & scope">
-  <div class="slide-no">0<b>3</b> · GROUND RULES</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Assumptions &amp; scope</div>
-    <h2 class="reveal">What we're designing, and what we're deliberately not.</h2>
-    <div class="grid g2 reveal" style="margin-top:22px;grid-template-columns:1.3fr .7fr">
-      <div>
-        <div class="alist">
-          <div class="it"><span class="k">1</span><div><b>Partner Fulfillment.</b> <span>Voya owns payment + post-booking (incl. cancellation) via Agoda.</span></div></div>
-          <div class="it"><span class="k">2</span><div><b>Full cancellation</b> <span>of one confirmed, prepaid booking made in-app.</span></div></div>
-          <div class="it"><span class="k">3</span><div><b>Booking linkage.</b> <span>Each booking stores Agoda's <code>bookingId</code> mapped to the user.</span></div></div>
-          <div class="it"><span class="k">4</span><div><b>Server-authoritative refund.</b> <span>Amount comes from Agoda's Preview call, never computed on device.</span></div></div>
-          <div class="it"><span class="k">5</span><div><b>Refund to origin.</b> <span>Settled by Agoda/rails; Voya surfaces status only.</span></div></div>
-          <div class="it"><span class="k">6</span><div><b>Re-auth</b> <span>(biometric) gates the destructive confirm step.</span></div></div>
-          <div class="it"><span class="k">7</span><div><b>Locale.</b> <span>Booking currency; deadlines in hotel local time.</span></div></div>
-          <div class="it"><span class="k">8</span><div><b>Window.</b> <span>Cancel up to 1 day before check-in, per Agoda; else assisted.</span></div></div>
-          <div class="it"><span class="k">9</span><div><b>Idempotent confirm.</b> <span>Agoda <code>reference</code> + our key, never double-cancels.</span></div></div>
-          <div class="it"><span class="k">10</span><div><b>~120 s SLA</b> <span>tolerated via a processing state &amp; async <code>PENDING</code>.</span></div></div>
-        </div>
-      </div>
-      <div class="card" style="background:var(--surface-2)">
-        <h3 style="color:var(--red)">Out of scope · v1</h3>
-        <ul class="muted small" style="margin:10px 0 0 16px;line-height:1.9">
-          <li>Date / room <b>modifications</b></li>
-          <li><b>Partial</b> (per-room / per-night) cancel</li>
-          <li>No-show handling</li>
-          <li>Group / corporate bookings</li>
-          <li>Agent / offline cancellation</li>
-        </ul>
-        <div class="hr"></div>
-        <p class="small muted">Captured as future scope in the <a href="../docs/product-requirements.md">PRD</a>.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 4 IA -->
-<section class="slide" data-title="Information Architecture">
-  <div class="slide-no">0<b>4</b> · INFORMATION ARCHITECTURE</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Information Architecture</div>
-    <h2 class="reveal">Where cancellation lives, and how users reach it.</h2>
-    <div class="grid reveal" style="grid-template-columns:1.1fr .9fr;gap:22px;margin-top:20px">
-      <div class="tree">Voya <b>(Android)</b>
-└─ Bottom nav
-   ├─ Home
-   ├─ Search
-   ├─ <span class="bl">Trips</span>  ◀─ primary entry
-   │  ├─ <span class="bl">Upcoming</span>
-   │  │  └─ <b>Booking Details</b>
-   │  │     ├─ Modify        <span style="color:var(--ink-faint)">(v1: off)</span>
-   │  │     ├─ Contact / Help
-   │  │     └─ <span class="hi">Cancel booking ──┐</span>
-   │  ├─ Completed            │
-   │  └─ <b>Cancelled</b> (refunds)  │
-   └─ Account                 │
-      └─ Help Center          │
-         └─ "Cancel a booking"┤ (secondary)
-                              ▼
-      <span class="hi">╔══ CANCELLATION FLOW ══╗</span>
-      <span class="hi">║</span> 1 Refund Preview        <span class="hi">║</span>
-      <span class="hi">║</span> 2 Reason (optional)     <span class="hi">║</span>
-      <span class="hi">║</span> 3 Confirm + re-auth     <span class="hi">║</span>
-      <span class="hi">║</span> 4 Processing (~120s)    <span class="hi">║</span>
-      <span class="hi">║</span> 5 Confirmed + refund ETA<span class="hi">║</span>
-      <span class="hi">╚═══════════════════════╝</span></div>
-      <div class="grid" style="gap:12px;align-content:start">
-        <div class="card"><h3>Entry points</h3><p class="small muted" style="margin-top:6px"><b>1.</b> Trips › Upcoming › Booking Details › Cancel &nbsp; <b>2.</b> Account › Help › "Cancel a booking" &nbsp; <b>3.</b> Deep link from confirmation email / push.</p></div>
-        <div class="card"><h3>Hero priority order</h3><p class="small muted" style="margin-top:6px">① Refund amount + math → ② deadline / policy → ③ what's cancelled → ④ reason → ⑤ outcome-stating CTA.</p></div>
-        <div class="card" style="border-color:color-mix(in srgb,var(--blue) 35%,transparent)"><h3 style="color:var(--blue)">Information it moves</h3><p class="small muted" style="margin-top:6px"><b>In:</b> booking + policy (Retrieve), refund quote (Preview). <b>User:</b> intent, re-auth, reason. <b>Out:</b> cancel command (Confirm) → refund status + receipt.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 5 FLOW -->
-<section class="slide" data-title="Logic & information flow">
-  <div class="slide-no">0<b>5</b> · FLOW OF LOGIC + INFORMATION</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Flow of logic + information</div>
-    <h2 class="reveal" style="margin-bottom:8px">End-to-end, across three systems.</h2>
-    <div class="legend reveal">
-      <span><span class="dot" style="background:var(--blue)"></span> User (app)</span>
-      <span><span class="dot" style="background:var(--orange)"></span> Voya backend</span>
-      <span><span class="dot" style="background:var(--green)"></span> Agoda Demand API</span>
-      <span><span class="dot" style="background:var(--red)"></span> Exit / assisted</span>
-    </div>
-    <div class="flowmap reveal" id="flow">
-      <div class="frow">
-        <div class="fstep user"><span class="fn">1</span><div class="ft">Booking Details</div><div class="fapi fa">User</div></div>
-        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
-        <div class="fstep ag"><span class="fn">2</span><div class="ft">Get booking + policy</div><div class="fapi fa">Retrieve Booking</div></div>
-        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
-        <div class="fstep de"><span class="fn">3</span><div class="ft">Within window?</div><div class="fapi">now &lt; checkin − 1d</div></div>
-        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
-        <div class="fstep user"><span class="fn">4</span><div class="ft">Tap Cancel</div><div class="fapi fa">User</div></div>
-        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
-        <div class="fstep ag"><span class="fn">5</span><div class="ft">Quote the refund</div><div class="fapi fa">Cancellation · Preview</div></div>
-      </div>
-      <div class="fwrap">continues ↓</div>
-      <div class="frow">
-        <div class="fstep user"><span class="fn">6</span><div class="ft">Refund Preview</div><div class="fapi">Paid − Fee = Refund · ◇ policy</div></div>
-        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
-        <div class="fstep user"><span class="fn">7</span><div class="ft">Confirm + re-auth</div><div class="fapi">reason 0–44 · biometric</div></div>
-        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
-        <div class="fstep ag"><span class="fn">8</span><div class="ft">Cancel the booking</div><div class="fapi fa">Confirm · + idemp. key</div></div>
-        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
-        <div class="fstep user"><span class="fn">9</span><div class="ft">Processing</div><div class="fapi">~120s · PENDING ok</div></div>
-        <div class="farr"><svg viewBox="0 0 18 12"><line class="ln" x1="0" y1="6" x2="13" y2="6"/><polygon points="12,2 18,6 12,10" fill="currentColor"/></svg></div>
-        <div class="fstep ok"><span class="fn">10</span><div class="ft">Confirmed + refund</div><div class="fapi fa">refund.completed</div></div>
-      </div>
-      <div class="fexits">
-        <div class="fexit stop">◇ <b>Within window?, No</b> → assisted / fee-waiver (step 3)</div>
-        <div class="fexit warn">◇ <b>Result, error</b> → retry (same reference) / support (step 8)</div>
-        <div class="fexit ok">◇ <b>Confirmed</b> → refund status tracker · rebook nudge (step 10)</div>
-      </div>
-    </div>
-    <p class="small muted reveal" style="margin-top:10px"><span style="color:var(--blue)">●</span> User &nbsp; <span style="color:var(--green)">●</span> Agoda API &nbsp;, refund is always Agoda's number; Confirm carries the Preview <code>reference</code> + our idempotency key. Source: <code>flows/cancellation-flow.mmd</code>.</p>
-  </div>
-</section>
-
-<!-- 6 API MAP -->
-<section class="slide" data-title="Agoda API map">
-  <div class="slide-no">0<b>6</b> · AGODA DEMAND API</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal" style="color:var(--dev)">The integration surface</div>
-    <h2 class="reveal">Every screen is one Agoda call away.</h2>
-    <div class="grid reveal" style="grid-template-columns:1.15fr .85fr;gap:20px;margin-top:20px">
-      <div>
-        <table class="apitable">
-          <tr><th>Screen</th><th>Agoda call</th><th>Key data</th></tr>
-          <tr><td>My Trips / Details</td><td class="m">Retrieve Booking</td><td><code>status</code>, <code>cancellationPolicy</code></td></tr>
-          <tr><td>Refund Preview</td><td class="m">Cancellation · Preview</td><td>→ <code>reference</code>, <code>refundRate</code></td></tr>
-          <tr><td>Confirm + re-auth</td><td class="m">Cancellation · Confirm</td><td><code>cancelReason</code> 0–44</td></tr>
-          <tr><td>Processing</td><td class="m">await / poll</td><td><code>PENDING</code> ~120s</td></tr>
-          <tr><td>Confirmed</td><td class="m">refund.completed</td><td>ref, amount, ETA</td></tr>
-          <tr><td>Past window</td><td class="m">Fee-Waiver</td><td>assisted route</td></tr>
-        </table>
-        <div class="grid g2" style="margin-top:14px">
-          <div class="card" style="padding:14px"><div class="wrow sb"><h3 style="font-size:14px">Auth</h3><span class="tag doc">DOCUMENTED</span></div><p class="small muted" style="margin-top:6px"><code>Authorization: &lt;Site-ID&gt;:&lt;API-Key&gt;</code> (or OAuth 2.0). IP-whitelisted. Bad creds → <code>error 108</code>.</p></div>
-          <div class="card" style="padding:14px"><div class="wrow sb"><h3 style="font-size:14px">Two-step cancel</h3><span class="tag doc">DOCUMENTED</span></div><p class="small muted" style="margin-top:6px">Preview returns a <code>reference</code> you must pass to Confirm, it binds the confirm to the exact refund shown.</p></div>
-        </div>
-      </div>
-      <div class="codeblock reveal">
-<span class="c"># Preview → powers the refund screen</span>
-POST /cancellation/preview
-<span class="k">Authorization</span>: 123456:****-****-****
-{ <span class="k">"bookingId"</span>: <span class="s">889001234</span> }
-
-<span class="c"># 200</span>
-{ "cancellationSummary": {
-  <span class="k">"reference"</span>: <span class="s">70421</span>,
-  <span class="k">"refundRate"</span>: [{ "currency":"INR",
-     "inclusive": <span class="s">18240.00</span> }] }}
-
-<span class="c"># Confirm → the destructive action</span>
-POST /cancellation/confirm
-<span class="k">Idempotency-Key</span>: voya-cxl-889..-9f2a
-{ "bookingId":889001234,
-  <span class="k">"reference"</span>:70421,
-  <span class="k">"cancelReason"</span>:7,
-  "refundRate":{ "currency":"INR",
-     "inclusive":18240.00 } }
-<span class="c"># → 200 empty  (or PENDING)</span>
-      </div>
-    </div>
-    <p class="small muted reveal" style="margin-top:12px"><span class="tag doc" style="vertical-align:middle">DOCUMENTED</span> field names from Agoda's public Demand docs · <span class="tag inf" style="vertical-align:middle">INFERRED</span> exact paths + refund webhook. Full map in <code>docs/api-integration.md</code>.</p>
-  </div>
-</section>
-
-<!-- 7 WIREFRAME 1 : ENTRY -->
-<section class="slide wf-slide" data-title="Wireframe · Entry">
-  <div class="slide-no">0<b>7</b> · WIREFRAME ① &nbsp; ENTRY</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ①, finding the booking</div>
-    <h2 class="reveal">My Trips → Booking Details.</h2>
-    <div class="wf-grid reveal" style="margin-top:12px">
-      <div class="appshots">
-        <div class="shotwrap"><img class="appshot pair" src="../wireframes/screens/app-ios-01-trips.png" alt="My Trips"><div class="cap">01 · My Trips</div></div>
-        <div class="shotwrap"><img class="appshot pair" src="../wireframes/screens/app-ios-02-details.png" alt="Booking Details"><div class="cap">02 · Booking Details</div></div>
-      </div>
-      <div class="lenses">
-        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>"Cancel" is present but not the loudest control. The <b>free-cancel deadline shows on the card itself</b>, with a live countdown ring inside the window.</p></div>
-        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>List from cache, reconciled with <code>Retrieve Booking</code> → <code>status</code> + <code>cancellationPolicy{date[]}</code>. Guard: if <code>now ≥ check-in − 1d</code> → assisted route.</p></div>
-        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Surfacing the deadline early nudges cancels <b>inside the free window</b> → fewer penalties & tickets. Best place to offer "modify instead".</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 8 WIREFRAME 2 : REFUND PREVIEW (HERO) -->
-<section class="slide wf-slide" data-title="Wireframe · Refund preview">
-  <div class="slide-no">0<b>8</b> · WIREFRAME ② &nbsp; THE HERO SCREEN</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ②, refund preview</div>
-    <h2 class="reveal">Where people decide: show the money, then ask.</h2>
-    <div class="wf-grid reveal" style="margin-top:10px">
-      <div class="appshots"><div class="shotwrap"><img class="appshot" src="../wireframes/screens/app-ios-03-preview.png" alt="Refund Preview"><div class="cap">03 · Refund preview (live Agoda quote)</div></div></div>
-      <div class="lenses">
-        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>Refund amount is the hero; the <b>math is explicit</b> (Paid − Fee = Refund). CTA states the outcome. Reason is never a gate.</p></div>
-        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>Call <code>Cancellation Preview {bookingId}</code> on entry → render <code>refundRate</code> (<b>server truth, fetched live, never computed</b>). Hold <code>reference</code> for Confirm.</p></div>
-        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Transparency here is the biggest lever on disputes & chargebacks. Non-refundable → offer <b>travel credit</b> (fast-follow).</p></div>
-      </div>
-    </div>
-    <div class="branches reveal" id="s03branches" style="margin-top:8px">
-      <div class="branch free"><h4>● Free</h4><div class="amt">₹18,240</div><p>Inside the window, full refund. CTA: "Cancel & get ₹18,240 back".</p></div>
-      <div class="branch partial"><h4>● Partial</h4><div class="amt">₹11,172</div><p>Penalty tier applies. Paid − fee shown clearly; CTA names the net refund.</p></div>
-      <div class="branch nonref"><h4>● Non-refundable</h4><div class="amt">₹0</div><p>Calm, honest warning (not alarm-red). CTA: "Cancel, no refund". Offer credit.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- 9 WIREFRAME 3 : CONFIRM -->
-<section class="slide wf-slide" data-title="Wireframe · Confirm">
-  <div class="slide-no">0<b>9</b> · WIREFRAME ③ &nbsp; CONFIRM + RE-AUTH</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ③, the destructive step</div>
-    <h2 class="reveal">Deliberate confirmation, with re-authentication.</h2>
-    <div class="wf-grid reveal" style="margin-top:12px">
-      <div class="appshots"><div class="shotwrap"><img class="appshot" src="../wireframes/screens/app-ios-04-confirm.png" alt="Confirm"><div class="cap">04 · Confirm + Face ID → Processing (~120s)</div></div></div>
-      <div class="lenses">
-        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>One last plain summary + an <b>honest "can't be undone"</b>. Re-auth (Face ID / fingerprint) and a deliberate confirm, never a stray tap. Easy back-out.</p></div>
-        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p><code>Cancellation Confirm {bookingId, reference, cancelReason, refundRate}</code> + our <b>idempotency key</b>. Reason → <code>cancelReason</code> 0–44. Then a processing state tolerant of the ~120s SLA / PENDING.</p></div>
-        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Deliberate friction prevents regret cancellations & fraud. Reason codes feed analytics and supply insight back to Agoda.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 10 WIREFRAME 4 : CONFIRMED + TRACKER -->
-<section class="slide wf-slide" data-title="Wireframe · Confirmed & tracker">
-  <div class="slide-no">1<b>0</b> · WIREFRAME ④ &nbsp; CONFIRMED → REFUND TRACKER</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ④, relief, then proof</div>
-    <h2 class="reveal">A record people can trust, then a visible refund.</h2>
-    <div class="wf-grid reveal" style="margin-top:12px">
-      <div class="appshots">
-        <div class="shotwrap"><img class="appshot pair" src="../wireframes/screens/app-ios-05-done.png" alt="Confirmed"><div class="cap">05 · Confirmed</div></div>
-        <div class="shotwrap"><img class="appshot pair" src="../wireframes/screens/app-ios-06-tracker.png" alt="Refund tracker"><div class="cap">06 · Refund status</div></div>
-      </div>
-      <div class="lenses">
-        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>Processing shows progress + lets you leave, never an infinite spinner. Confirmed leads with the <b>refund timeline</b>, what people are really anxious about.</p></div>
-        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>Await Confirm; on <code>PENDING</code>, poll status / await webhook <code>refund.completed</code>. Persist <code>cancellationId</code>; email/push; move to Cancelled.</p></div>
-        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Confirmation deflects "did it work?" tickets; the <b>rebook CTA recovers revenue</b>; track refund-SLA adherence.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 11 WIREFRAME 5 : EDGE STATES + EVERY SKIN -->
-<section class="slide wf-slide" data-title="Wireframe · Edge & skins">
-  <div class="slide-no">1<b>1</b> · WIREFRAME ⑤ &nbsp; CORNER CASES + EVERY SKIN</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ⑤, the unhappy paths, on every skin</div>
-    <h2 class="reveal">Every failure has a next step, iOS, Android & low-fi.</h2>
-    <div class="appshots reveal" style="margin-top:14px">
-      <div class="shotwrap"><img class="appshot edge" src="../wireframes/screens/app-ios-07-error.png" alt="Error"><div class="cap">Error → retry / support</div></div>
-      <div class="shotwrap"><img class="appshot edge" src="../wireframes/screens/app-ios-08-assisted.png" alt="Assisted"><div class="cap">Past window → fee-waiver</div></div>
-      <div class="shotwrap"><img class="appshot edge" src="../wireframes/screens/app-android-preview.png" alt="Android"><div class="cap">Android · Material 3</div></div>
-      <div class="shotwrap"><img class="appshot edge" src="../wireframes/screens/app-blueprint-preview.png" alt="Blueprint"><div class="cap">Low-fi wireframe</div></div>
-    </div>
-    <div class="grid g3 reveal" style="margin-top:14px">
-      <div class="lens design" style="margin:0"><h4><span class="ic">🎨</span> Design</h4><p>No dead ends, plain-language errors, each with a clear action. Same flow renders natively on iOS & Android, and as a low-fi wireframe.</p></div>
-      <div class="lens dev" style="margin:0"><h4><span class="ic">⚙️</span> Developer</h4><p>Map Agoda <code>errorMessage{id,subId,message}</code> + <code>error 108</code>; retriable vs terminal; <b>idempotent retry</b> (same <code>reference</code>); graceful offline.</p></div>
-      <div class="lens biz" style="margin:0"><h4><span class="ic">📈</span> Business</h4><p>Good failure UX = fewer chargebacks and calls. 55 corner cases catalogued & demoable in the live app.</p></div>
-    </div>
-  </div>
-</section>
-
-<!--WF-->
-
-
-<!-- 12 PRODUCT NOTE 1 -->
-<section class="slide" data-title="Product note I">
-  <div class="slide-no">1<b>2</b> · PRODUCT NOTE &nbsp;①</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal">Product note · the flow &amp; the thinking</div>
-    <h2 class="reveal">Built around one promise: no surprises.</h2>
-    <div class="grid g2 reveal" style="margin-top:20px">
-      <div class="card">
-        <h3>The moment</h3>
-        <p class="small muted" style="margin-top:8px">Cancellation is the most emotional step in travel, plans fell through, money's at stake, a fight half-expected. Make it clear, fast and honest and a <i>negative</i> moment becomes a reason to trust us and rebook. Make it opaque and users call support, dispute with the bank, and leave one-star reviews.</p>
-        <h3 style="margin-top:14px">The flow</h3>
-        <p class="small muted" style="margin-top:8px">Booking Details → <b>Cancel</b> → we call Agoda <b>Preview</b> and show the refund math, method, ETA and a live deadline countdown, the number is <b>Agoda's, not ours</b>. The screen adapts to Free / Partial / Non-refundable; the CTA states the outcome. Continue → optional reason → <b>Confirm + re-auth</b> → Agoda <b>Confirm</b> (with <code>reference</code> + idempotency key) → honest <b>Processing</b> (~120s, async-tolerant) → <b>Confirmed</b> with reference, refund &amp; timeline, plus a receipt and status tracker.</p>
-      </div>
-      <div class="card" style="background:var(--surface-2)">
-        <h3>Why these choices</h3>
-        <ul class="small muted" style="margin:10px 0 0 16px;line-height:1.85">
-          <li><b>Transparency over optimism</b>, show the real refund up front; lose a few cancels, save far more in disputes.</li>
-          <li><b>Server-authoritative money</b>, Agoda's number, surfaced, never recomputed on device.</li>
-          <li><b>Deliberate friction</b>, re-auth + outcome-stating CTA protect users from regret &amp; fraud, without feeling like a trap.</li>
-          <li><b>Designed for the unhappy path</b>, the policy branches and error states <i>are</i> the product; the happy path is the simple part.</li>
-        </ul>
-        <div class="hr"></div>
-        <p class="hand" style="font-size:20px">the refund shown is the refund paid.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 13 PRODUCT NOTE 2 -->
-<section class="slide" data-title="Product note II">
-  <div class="slide-no">1<b>3</b> · PRODUCT NOTE &nbsp;② + ROADMAP</div>
-  <div class="slide-inner">
-    <div class="eyebrow reveal" style="color:var(--biz)">What we'll watch · risks · what's next</div>
-    <h2 class="reveal">Ship v1, learn at the Preview screen, then go deeper.</h2>
-    <div class="grid g3 reveal" style="margin-top:22px">
-      <div class="card"><h3 style="color:var(--biz)">We'll watch</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li>Self-serve cancel rate</li><li>Cancellation tickets ↓</li><li>Disputes / chargebacks ↓</li><li><b>Preview drop-off</b> (the one that matters most)</li><li>Refund-SLA adherence</li><li>Post-cancel rebooking · CSAT</li></ul></div>
-      <div class="card"><h3 style="color:var(--amber)">Risks &amp; open Qs</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li>Exact Agoda REST paths + refund-status/webhook channel to confirm</li><li>Non-refundable = satisfaction cliff → travel-credit</li><li>Deadline timezone correctness (hotel local time)</li></ul></div>
-      <div class="card" style="border-color:color-mix(in srgb,var(--orange) 40%,transparent)"><h3 style="color:var(--orange)">Roadmap</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li><b>v1</b> this flow</li><li><b>v1.1</b> refund-status push · "modify instead"</li><li><b>vNext</b> partial / per-room cancel · non-ref → travel credit · group bookings</li></ul></div>
-    </div>
-    <div class="hr reveal"></div>
-    <div class="reveal" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <span class="tag">docs/product-requirements.md</span>
-        <span class="tag">docs/assumptions.md</span>
-        <span class="tag">docs/api-integration.md</span>
-        <span class="tag">flows/cancellation-flow.mmd</span>
-        <span class="tag">wireframes/design-notes.md</span>
-      </div>
-      <div style="text-align:right">
-        <div style="font-weight:800;font-size:15px;color:var(--orange)">▶ Try it live</div>
-        <div class="small" style="color:var(--ink)">agoda-cancellation-flow.vercel.app</div>
-        <div class="small muted">iOS &amp; Android · wireframe &amp; design · 55 corner cases · live Agoda API</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-</main>
-
-<script>
-(function(){
-  var slides=[].slice.call(document.querySelectorAll('.slide'));
-  document.getElementById('tot').textContent=String(slides.length).padStart(2,'0');
-  var prog=document.getElementById('prog'),cur=document.getElementById('cur');
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
-    e.target.querySelectorAll('.reveal').forEach(function(r,i){setTimeout(function(){r.classList.add('in')},i*70)});
-    var idx=slides.indexOf(e.target); if(idx>=0){cur.textContent=String(idx+1).padStart(2,'0');}
-  }})},{threshold:.4});
-  slides.forEach(function(s){io.observe(s)});
-  var deck=document.getElementById('deck');
-  function onScroll(){var h=deck.scrollHeight-window.innerHeight;prog.style.width=(window.scrollY/(h||1)*100)+'%';}
-  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
-  function go(d){var y=window.scrollY,t=null;for(var i=0;i<slides.length;i++){var o=slides[i].offsetTop;
-    if(d>0&&o>y+5){t=o;break;} if(d<0&&o<y-5){t=o;}}
-    if(t!==null)window.scrollTo({top:t,behavior:'smooth'});}
-  window.addEventListener('keydown',function(e){
-    if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(1);}
-    if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();go(-1);}
-  });
-  document.getElementById('print').onclick=function(){window.print();};
-  document.getElementById('theme').onclick=function(){
-    var r=document.documentElement,cuR=r.getAttribute('data-theme');
-    r.setAttribute('data-theme',cuR==='dark'?'light':'dark');
-  };
-})();
-</script>
-</body>
-</html>
+  <div style="flex:1;font-size:13px">
+   <div class="box"><h3>Ten scenarios shown</h3><ol style="padding-left:17px;line-height:1.5"><li>Full refund before the penalty cutoff (D)</li><li>Partial refund with the fee shown (E)</li><li>₹0 refund; cancelling still allowed (F)</li><li>Already cancelled; no Confirm sent (O)</li><li>Ineligible status or too close to check-in: support (N)</li><li>Preview slow or failing: no quote shown (C)</li><li>Confirm times out: recheck Booking Detail first (H, J)</li><li>Refund mismatch, error 914: fresh Preview (P)</li><li>Waiver not allowed: no waiver link (F without link)</li><li>Waiver pending, then accepted or declined (L, M)</li></ol>
+   <div class="muted" style="margin-top:4px;font-size:11.5px">Ten of the twenty cases we identified. The rest (wrong account, quote changes after display, multi-room, refund payment delay, app closed mid-call) are handled by the same rules and kept in the team's working matrix.</div></div>
+   <div class="box" style="margin-top:10px"><h3>Checks run on this document</h3><ul><li>Weekdays verified: 25 Oct 2026 Sunday; 7 Dec Monday; 10 Dec Thursday; 12 Dec Saturday</li><li>Every wireframe has Design, Developer and Business notes</li><li>No endpoint paths or response fields beyond Agoda's documentation</li></ul></div>
+  </div></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>11 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Product note (1 of 2)</h1><div class="sub">Voya hotel cancellation on Android</div></div><div class="prose" style="font-size:16.2px;line-height:1.55"><h2>Problem and scope</h2><p>Voya is an Android app that sells hotel rooms sourced from Agoda. A traveler who booked through Voya should be able to cancel from the app and know what it will cost before agreeing. This note covers version 1: full cancellation of one confirmed booking, started from My trips. We assume Voya works under Agoda's Partner Fulfillment model, where Voya takes the payment and handles service after the sale. Date changes, cancelling one room out of several, no-show disputes and the payment system that returns money to the traveler are not designed here. Every hotel, price and date in the wireframes is made-up test data.</p><h2>How the flow works</h2><p>The traveler opens My trips and picks a booking. Voya already stores its own reference next to Agoda's bookingId, and before showing the Cancel booking button the backend reads the current status from Agoda's Booking Detail. If the booking is already cancelled, or its status does not allow self-service cancellation, the button is replaced by the existing status or a route to support.</p><p>Tapping Cancel booking makes the backend call Cancel Preview. Agoda returns a reference, the policy text, what was paid and what would be refunded. Voya shows those figures beside the hotel name and dates and asks for a clear yes or no. Only then does the backend send Confirm, using the reference and refund amount from that preview. A successful Confirm returns HTTP 200 with an empty body, so Voya does not wait for a field that says what happened. It reads Booking Detail again and shows Cancellation confirmed when the status says cancelled.</p><p>The policy text on Booking details comes from the structured cancellation data in the Search response, saved when the traveler booked. It is a reminder and not a quote. Deadlines and amounts can change, so Preview is the only source for the figure on the review screen.</p><h2>Why the screens are in this order</h2><p>The refund appears before the destructive button because it is the number the traveler is deciding on. Hotel and dates repeat on the review screen so someone with several trips does not cancel the wrong one. Keep booking is always one tap away. We left out a biometric prompt and a long survey. Neither protects the traveler from a wrong decision, and the reason question is optional, sent as code 0 when skipped. The confirmation screen says the booking is cancelled and a refund is on its way, but gives no number of days, because Agoda's documentation does not say when the traveler's money comes back under Partner Fulfillment.</p></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>12 / 13</span></div></section>
+<section class="slide "><div class="hd"><h1>Product note (2 of 2)</h1><div class="sub">Exceptions, trade-offs and what is left to confirm</div></div><div class="prose" style="font-size:15.2px;line-height:1.55"><h2>Exceptions</h2><p>A refund of zero is not the same as a booking that cannot be cancelled. A non-refundable rate can still be cancelled through the API; the traveler gets nothing back, and the screen says so before Continue. Separately, the date after which the API refuses a cancellation is not the date a penalty starts. The two Agoda pages we read give different boundaries for that cutoff: one day before check-in in the cancellation guide, and midnight at the start of the check-in date in the certification guide. Until Agoda confirms, version 1 sends anything close to check-in to support.</p><p>Both Preview and Confirm can take up to 120 seconds, so each has its own waiting screen that blocks a second tap. If Confirm times out, we do not know whether it went through, so the backend reads Booking Detail first and asks for a fresh Preview only if the booking is still active. If Agoda rejects Confirm because the refund no longer matches the quote (the documented example is error 914), the app shows the new amount and asks again. Authentication and permission errors are logged and never shown to the traveler as codes.</p><p>Fee waiver is a separate path, offered only when Booking Detail shows isFeeWaiverAllowed and Voya's account has permission. The traveler asks, the hotel decides, and Voya checks Booking Detail for the answer for up to 72 hours, but not past check-in. The screens never promise a waiver. The documentation lists different reason values and statuses in two places, so we mark them for validation.</p><h2>Assumptions and trade-offs</h2><p>In the examples Voya refunds the traveler the amount Agoda quotes, which assumes the traveler paid what Agoda charges Voya. A markup, coupon, currency conversion or gateway fee would break that and needs a business decision. Returning money to the traveler is the payment gateway's job, so the app tracks booking status and refund status separately. Reading Booking Detail after every Confirm adds a call and slows the result screen a little; we accept that to avoid showing a cancellation that did not happen.</p><h2>What to measure after launch</h2><p>We would track the share of eligible bookings cancelled in the app, the drop-off between seeing a quote and confirming, Preview and Confirm timeout and error rates, the time to show the first quote, the share of cancellations that go to support, and refund questions after cancellation. We have no baseline for any of these yet.</p><h2>Still to confirm with Agoda</h2><p>Our account permissions for Preview, Confirm and fee waiver; the exact cancellation cutoff; the fee-waiver reason values and status names; how and when the traveler's refund settles; and who at Voya owns manual cancellations.</p></div><div class="ft"><span>Voya hotel cancellation, Android. Concept wireframes with simulated data.</span><span>13 / 13</span></div></section></body></html>
