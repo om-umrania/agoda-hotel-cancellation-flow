@@ -38,8 +38,8 @@ Voya (Android)
 ```
 
 ## Entry points
-1. **Trips › Upcoming › Booking Details › Cancel booking** — the main path.
-2. **Account › Help Center › "Cancel a booking"** — support-led path.
+1. **Trips › Upcoming › Booking Details › Cancel booking**, the main path.
+2. **Account › Help Center › "Cancel a booking"**, support-led path.
 3. **Deep link** from the confirmation email / push → Booking Details.
 
 ## Content hierarchy on the hero (Refund Preview) screen
@@ -48,7 +48,7 @@ Priority order the eye should travel:
 2. **Deadline** / policy in plain language (countdown if inside the free window)
 3. **What's being cancelled** (hotel, dates, guests)
 4. Optional **reason** selector
-5. Primary **CTA** whose label states the outcome ("Cancel & get ₹X back" / "Cancel — no refund")
+5. Primary **CTA** whose label states the outcome ("Cancel & get ₹X back" / "Cancel, no refund")
 
 ## Information the flow moves
 - **In:** booking + policy (Retrieve), refund quote (Preview).

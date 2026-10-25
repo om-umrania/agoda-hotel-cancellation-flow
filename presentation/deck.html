@@ -4,10 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Agoda Cancellation Flow</title>
-<meta name="description" content="PM101 case: an Android hotel-cancellation flow for Voya, powered by Agoda's Demand API — IA, flowchart, annotated wireframes and product note.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<meta name="description" content="PM101 case: an Android hotel-cancellation flow for Voya, powered by Agoda's Demand API, IA, flowchart, annotated wireframes and product note.">
 <style>
 :root{
   --ink:#0F1B2D; --ink-soft:#51607A; --ink-faint:#8C97A8;
@@ -20,9 +17,9 @@
   --shadow:0 1px 2px rgba(15,27,45,.04), 0 10px 30px rgba(15,27,45,.07);
   --shadow-lg:0 20px 60px rgba(15,27,45,.14);
   --radius:18px; --radius-sm:12px;
-  --font:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  --hand:'Caveat',cursive;
+  --font:"Helvetica Neue",Helvetica,Arial,"Segoe UI",Roboto,system-ui,sans-serif;
+  --mono:"SF Mono",Menlo,Monaco,Consolas,monospace;
+  --hand:"Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 :root:not([data-theme="light"]) :root, :root[data-theme="dark"]{ color-scheme:dark; }
 @media (prefers-color-scheme: dark){
@@ -86,7 +83,7 @@ h2{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:-.02em;line-h
 h3{font-size:18px;font-weight:700;letter-spacing:-.01em}
 .lead{font-size:clamp(16px,1.7vw,20px);color:var(--ink-soft);max-width:60ch;margin-top:14px}
 .muted{color:var(--ink-soft)} .small{font-size:13px} .mono{font-family:var(--mono)}
-.hand{font-family:var(--hand);font-size:24px;color:var(--orange);line-height:1}
+.hand{font-family:var(--font);font-size:15px;font-style:italic;color:var(--ink-soft);line-height:1.4}
 .hr{height:1px;background:var(--line);border:0;margin:20px 0}
 
 /* reveal */
@@ -174,6 +171,14 @@ code,.code{font-family:var(--mono);font-size:12.5px}
 
 /* ===== PHONE WIREFRAMES ===== */
 .wf-slide .slide-inner{max-width:1180px}
+.appshots{display:flex;gap:20px;justify-content:center;align-items:flex-end;flex-wrap:wrap}
+.shotwrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.shotwrap .cap{font:700 11px/1 var(--mono);letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase}
+.appshot{height:474px;width:auto;display:block}
+.appshot.pair{height:452px}
+.appshot.edge{height:360px}
+.skinlabel{display:inline-flex;align-items:center;gap:6px;font:700 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink-soft)}
 .wf-grid{display:grid;grid-template-columns:auto 1fr;gap:34px;align-items:start}
 .phones{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
 .phonewrap{display:flex;flex-direction:column;align-items:center;gap:8px}
@@ -326,12 +331,13 @@ code,.code{font-family:var(--mono);font-size:12.5px}
       <div>
         <div class="badge reveal"><span class="b">V</span> Voya × Agoda &nbsp;·&nbsp; Android</div>
         <h1 class="reveal" style="margin-top:20px">Designing the hotel<br><span style="color:var(--blue)">cancellation</span> flow.</h1>
-        <p class="lead reveal">A self-serve cancellation experience for an Android hotel-booking app, built on Agoda's Demand API — with one promise to the traveller: <b style="color:var(--ink)">no surprises about the refund.</b></p>
-        <div class="hand reveal" style="margin-top:14px">cancel with confidence ↝</div>
+        <p class="lead reveal">A self-serve cancellation experience for an Android hotel-booking app, built on Agoda's Demand API, with one promise to the traveller: <b style="color:var(--ink)">no surprises about the refund.</b></p>
+        <div class="hand reveal" style="margin-top:14px">You always see the exact refund before you confirm. No surprises.</div>
         <div class="credits reveal">
           <span class="m">PM101 · Mid-Course Case</span>
           <span class="m">Masters' Union</span>
           <span class="m">Oct 25, 2026</span>
+          <span class="m" style="border-color:color-mix(in srgb,var(--orange) 45%,transparent);color:var(--ink)"><b style="color:var(--orange)">▶ Live:</b> agoda-cancellation-flow.vercel.app</span>
         </div>
         <div class="credits reveal" style="margin-top:8px">
           <span class="m" style="border-color:color-mix(in srgb,var(--blue) 35%,transparent);color:var(--ink)"><b>Om Umrania</b></span>
@@ -342,21 +348,7 @@ code,.code{font-family:var(--mono);font-size:12.5px}
         </div>
       </div>
       <div style="display:flex;justify-content:center" class="reveal">
-        <div class="phone">
-          <div class="scr">
-            <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
-            <div class="appbar"><span class="bk">←</span><span class="ttl">Cancel booking</span></div>
-            <div class="body">
-              <div class="wb"><div class="wrow sb"><span class="wh">You'll get back</span><span class="wchip ok">FREE</span></div>
-                <div class="amt" style="font:900 26px/1 var(--font);color:var(--green)">₹18,240</div>
-                <div class="wtxt">Full refund · 5–7 business days</div></div>
-              <div class="wb"><div class="wrow"><div class="ring" style="--p:62"><span>18h</span></div>
-                <div><div class="wtxt b">Free until 26 Oct, 2:00 PM</div><div class="wtxt">Hotel local time</div></div></div></div>
-              <div class="wb" style="gap:5px"><div class="wl lg" style="width:70%"></div><div class="wl s"></div></div>
-            </div>
-            <div class="ctabar"><div class="wbtn primary">Cancel &amp; get ₹18,240 back</div><div class="wbtn ghost">Keep booking</div></div>
-          </div>
-        </div>
+        <img class="appshot" style="height:506px" src="../wireframes/screens/app-ios-03-preview.png" alt="Refund preview on iPhone">
       </div>
     </div>
   </div>
@@ -367,18 +359,18 @@ code,.code{font-family:var(--mono);font-size:12.5px}
   <div class="slide-no">0<b>2</b> · CONTEXT</div>
   <div class="slide-inner">
     <div class="eyebrow reveal">Why this moment matters</div>
-    <h2 class="reveal">The most anxious step in travel — and our best chance to earn trust.</h2>
+    <h2 class="reveal">The most anxious step in travel, and our best chance to earn trust.</h2>
     <div class="grid g3 reveal" style="margin-top:26px">
-      <div class="card"><h3>😣 The problem</h3><p class="muted small" style="margin-top:6px">Users can book in Voya but can't <b>cancel</b> in Voya. When plans change they call support or dispute with their bank — cost, chargebacks, churn, and a lost trust moment.</p></div>
-      <div class="card"><h3>🎯 The goal</h3><p class="muted small" style="margin-top:6px">Let users cancel themselves, seeing <b>exactly</b> what they'll be refunded and when — <i>before</i> they commit. The refund shown is the refund paid.</p></div>
-      <div class="card" style="border-color:color-mix(in srgb,var(--orange) 40%,transparent)"><h3 style="color:var(--orange)">★ North star</h3><p class="muted small" style="margin-top:6px"><b>"No surprises."</b> Transparency over optimism — we trade a few completed cancellations for far fewer disputes and far more repeat bookings.</p></div>
+      <div class="card"><h3>😣 The problem</h3><p class="muted small" style="margin-top:6px">Users can book in Voya but can't <b>cancel</b> in Voya. When plans change they call support or dispute with their bank, cost, chargebacks, churn, and a lost trust moment.</p></div>
+      <div class="card"><h3>🎯 The goal</h3><p class="muted small" style="margin-top:6px">Let users cancel themselves, seeing <b>exactly</b> what they'll be refunded and when, <i>before</i> they commit. The refund shown is the refund paid.</p></div>
+      <div class="card" style="border-color:color-mix(in srgb,var(--orange) 40%,transparent)"><h3 style="color:var(--orange)">★ North star</h3><p class="muted small" style="margin-top:6px"><b>"No surprises."</b> Transparency over optimism, we trade a few completed cancellations for far fewer disputes and far more repeat bookings.</p></div>
     </div>
     <div class="hr reveal"></div>
     <div class="eyebrow reveal" style="color:var(--biz)">How we'll know it worked</div>
     <div class="kpis reveal">
       <div class="kpi"><div class="n"><span class="ico">↗</span> Self-serve rate</div><div class="d">Share of cancellations done in-app without support.</div></div>
       <div class="kpi"><div class="n"><span class="ico">↘</span> Tickets &amp; disputes</div><div class="d">Cancellation tickets and refund chargebacks fall.</div></div>
-      <div class="kpi"><div class="n"><span class="ico">◎</span> Preview drop-off</div><div class="d">Where trust breaks — the make-or-break screen.</div></div>
+      <div class="kpi"><div class="n"><span class="ico">◎</span> Preview drop-off</div><div class="d">Where trust breaks, the screen that matters most.</div></div>
       <div class="kpi"><div class="n"><span class="ico">↺</span> Rebooking rate</div><div class="d">Revenue recovered right after a cancellation.</div></div>
     </div>
   </div>
@@ -389,7 +381,7 @@ code,.code{font-family:var(--mono);font-size:12.5px}
   <div class="slide-no">0<b>3</b> · GROUND RULES</div>
   <div class="slide-inner">
     <div class="eyebrow reveal">Assumptions &amp; scope</div>
-    <h2 class="reveal">What we're designing — and what we're deliberately not.</h2>
+    <h2 class="reveal">What we're designing, and what we're deliberately not.</h2>
     <div class="grid g2 reveal" style="margin-top:22px;grid-template-columns:1.3fr .7fr">
       <div>
         <div class="alist">
@@ -401,7 +393,7 @@ code,.code{font-family:var(--mono);font-size:12.5px}
           <div class="it"><span class="k">6</span><div><b>Re-auth</b> <span>(biometric) gates the destructive confirm step.</span></div></div>
           <div class="it"><span class="k">7</span><div><b>Locale.</b> <span>Booking currency; deadlines in hotel local time.</span></div></div>
           <div class="it"><span class="k">8</span><div><b>Window.</b> <span>Cancel up to 1 day before check-in, per Agoda; else assisted.</span></div></div>
-          <div class="it"><span class="k">9</span><div><b>Idempotent confirm.</b> <span>Agoda <code>reference</code> + our key — never double-cancels.</span></div></div>
+          <div class="it"><span class="k">9</span><div><b>Idempotent confirm.</b> <span>Agoda <code>reference</code> + our key, never double-cancels.</span></div></div>
           <div class="it"><span class="k">10</span><div><b>~120 s SLA</b> <span>tolerated via a processing state &amp; async <code>PENDING</code>.</span></div></div>
         </div>
       </div>
@@ -426,7 +418,7 @@ code,.code{font-family:var(--mono);font-size:12.5px}
   <div class="slide-no">0<b>4</b> · INFORMATION ARCHITECTURE</div>
   <div class="slide-inner">
     <div class="eyebrow reveal">Information Architecture</div>
-    <h2 class="reveal">Where cancellation lives — and how users reach it.</h2>
+    <h2 class="reveal">Where cancellation lives, and how users reach it.</h2>
     <div class="grid reveal" style="grid-template-columns:1.1fr .9fr;gap:22px;margin-top:20px">
       <div class="tree">Voya <b>(Android)</b>
 └─ Bottom nav
@@ -497,12 +489,12 @@ code,.code{font-family:var(--mono);font-size:12.5px}
         <div class="fstep ok"><span class="fn">10</span><div class="ft">Confirmed + refund</div><div class="fapi fa">refund.completed</div></div>
       </div>
       <div class="fexits">
-        <div class="fexit stop">◇ <b>Within window? — No</b> → assisted / fee-waiver (step 3)</div>
-        <div class="fexit warn">◇ <b>Result — error</b> → retry (same reference) / support (step 8)</div>
+        <div class="fexit stop">◇ <b>Within window?, No</b> → assisted / fee-waiver (step 3)</div>
+        <div class="fexit warn">◇ <b>Result, error</b> → retry (same reference) / support (step 8)</div>
         <div class="fexit ok">◇ <b>Confirmed</b> → refund status tracker · rebook nudge (step 10)</div>
       </div>
     </div>
-    <p class="small muted reveal" style="margin-top:10px"><span style="color:var(--blue)">●</span> User &nbsp; <span style="color:var(--green)">●</span> Agoda API &nbsp; — refund is always Agoda's number; Confirm carries the Preview <code>reference</code> + our idempotency key. Source: <code>flows/cancellation-flow.mmd</code>.</p>
+    <p class="small muted reveal" style="margin-top:10px"><span style="color:var(--blue)">●</span> User &nbsp; <span style="color:var(--green)">●</span> Agoda API &nbsp;, refund is always Agoda's number; Confirm carries the Preview <code>reference</code> + our idempotency key. Source: <code>flows/cancellation-flow.mmd</code>.</p>
   </div>
 </section>
 
@@ -525,7 +517,7 @@ code,.code{font-family:var(--mono);font-size:12.5px}
         </table>
         <div class="grid g2" style="margin-top:14px">
           <div class="card" style="padding:14px"><div class="wrow sb"><h3 style="font-size:14px">Auth</h3><span class="tag doc">DOCUMENTED</span></div><p class="small muted" style="margin-top:6px"><code>Authorization: &lt;Site-ID&gt;:&lt;API-Key&gt;</code> (or OAuth 2.0). IP-whitelisted. Bad creds → <code>error 108</code>.</p></div>
-          <div class="card" style="padding:14px"><div class="wrow sb"><h3 style="font-size:14px">Two-step cancel</h3><span class="tag doc">DOCUMENTED</span></div><p class="small muted" style="margin-top:6px">Preview returns a <code>reference</code> you must pass to Confirm — it binds the confirm to the exact refund shown.</p></div>
+          <div class="card" style="padding:14px"><div class="wrow sb"><h3 style="font-size:14px">Two-step cancel</h3><span class="tag doc">DOCUMENTED</span></div><p class="small muted" style="margin-top:6px">Preview returns a <code>reference</code> you must pass to Confirm, it binds the confirm to the exact refund shown.</p></div>
         </div>
       </div>
       <div class="codeblock reveal">
@@ -559,42 +551,17 @@ POST /cancellation/confirm
 <section class="slide wf-slide" data-title="Wireframe · Entry">
   <div class="slide-no">0<b>7</b> · WIREFRAME ① &nbsp; ENTRY</div>
   <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ① — finding the booking</div>
+    <div class="eyebrow reveal">Wireframe ①, finding the booking</div>
     <h2 class="reveal">My Trips → Booking Details.</h2>
-    <div class="wf-grid reveal" style="margin-top:18px">
-      <div class="phones">
-        <div class="phonewrap"><div class="phone"><div class="scr" id="s01">
-          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
-          <div class="appbar"><span class="ttl">My trips</span><span class="sp">◌</span></div>
-          <div class="body">
-            <div class="wseg"><div class="on">Upcoming</div><div>Completed</div><div>Cancelled</div></div>
-            <div class="wb"><div class="wrow"><div class="wimg" style="width:54px;height:54px"></div>
-              <div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="wtxt b">The Leela Palace</div><div class="wtxt">26–28 Oct · 1 room · 2 guests</div>
-              <div class="wrow"><span class="wchip ok">FREE till 26 Oct</span><span class="wchip bl">CONFIRMED</span></div></div></div></div>
-            <div class="wb"><div class="wrow"><div class="wimg" style="width:54px;height:54px"></div>
-              <div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="wtxt b">Taj Santacruz</div><div class="wtxt">12–14 Nov · 1 room · 2 guests</div>
-              <div class="wrow"><span class="wchip bad">NON-REFUNDABLE</span><span class="wchip bl">CONFIRMED</span></div></div></div></div>
-          </div>
-          <div class="botnav"><div class="bn"><span class="ic">⌂</span>Home</div><div class="bn"><span class="ic">◎</span>Search</div><div class="bn on"><span class="ic">✈</span>Trips</div><div class="bn"><span class="ic">◍</span>Account</div></div>
-        </div></div><div class="cap">01 · My Trips</div></div>
-
-        <div class="phonewrap"><div class="phone"><div class="scr" id="s02">
-          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
-          <div class="appbar"><span class="bk">←</span><span class="ttl">Booking details</span></div>
-          <div class="body">
-            <div class="wimg" style="height:78px"></div>
-            <div class="wb" style="gap:5px"><div class="wtxt b">The Leela Palace, Bengaluru</div><div class="wtxt">23 HAL Airport Rd · ★ 4.8</div></div>
-            <div class="wb"><div class="wrow sb"><div><div class="wtxt">Check-in</div><div class="wtxt b">Sun 26 Oct</div></div><div><div class="wtxt">Check-out</div><div class="wtxt b">Tue 28 Oct</div></div><div><div class="wtxt">Paid</div><div class="wtxt b">₹18,240</div></div></div></div>
-            <div class="wb" style="border-color:color-mix(in srgb,var(--green) 40%,transparent);background:var(--green-soft)"><div class="wrow"><div class="ring" style="--p:62"><span>18h</span></div><div><div class="wtxt b" style="color:var(--green)">Free cancellation</div><div class="wtxt">until 26 Oct, 2:00 PM (hotel time)</div></div></div></div>
-          </div>
-          <div class="ctabar"><div class="wrow" style="gap:7px"><div class="wbtn ghost" style="flex:1;opacity:.45">Modify</div><div class="wbtn" style="flex:1">Contact</div></div><div class="wbtn ghost" style="color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,transparent)">Cancel booking</div></div>
-        </div></div><div class="cap">02 · Booking Details</div></div>
+    <div class="wf-grid reveal" style="margin-top:12px">
+      <div class="appshots">
+        <div class="shotwrap"><img class="appshot pair" src="../wireframes/screens/app-ios-01-trips.png" alt="My Trips"><div class="cap">01 · My Trips</div></div>
+        <div class="shotwrap"><img class="appshot pair" src="../wireframes/screens/app-ios-02-details.png" alt="Booking Details"><div class="cap">02 · Booking Details</div></div>
       </div>
-
       <div class="lenses">
-        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>"Cancel" is present but not the loudest control. The <b>free-cancel deadline shows on the card itself</b>, so the user sees it before drilling in — with a countdown ring inside the window.</p></div>
-        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>List from cache, reconciled with <code>Retrieve Booking</code> → <code>status</code> + <code>cancellationPolicy{date[]}</code>; deadline derived from <code>date[]</code>. Guard: if <code>now ≥ check-in − 1d</code> → assisted route.</p></div>
-        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Surfacing the deadline early nudges users to cancel <b>inside the free window</b> → fewer penalties and "why was I charged?" tickets. Best place to offer "modify instead".</p></div>
+        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>"Cancel" is present but not the loudest control. The <b>free-cancel deadline shows on the card itself</b>, with a live countdown ring inside the window.</p></div>
+        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>List from cache, reconciled with <code>Retrieve Booking</code> → <code>status</code> + <code>cancellationPolicy{date[]}</code>. Guard: if <code>now ≥ check-in − 1d</code> → assisted route.</p></div>
+        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Surfacing the deadline early nudges cancels <b>inside the free window</b> → fewer penalties & tickets. Best place to offer "modify instead".</p></div>
       </div>
     </div>
   </div>
@@ -604,33 +571,20 @@ POST /cancellation/confirm
 <section class="slide wf-slide" data-title="Wireframe · Refund preview">
   <div class="slide-no">0<b>8</b> · WIREFRAME ② &nbsp; THE HERO SCREEN</div>
   <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ② — refund preview</div>
-    <h2 class="reveal">The make-or-break screen: show the money, then ask.</h2>
-    <div class="wf-grid reveal" style="margin-top:8px">
-      <div class="phones">
-        <div class="phonewrap"><div class="phone"><div class="scr" id="s03">
-          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
-          <div class="appbar"><span class="bk">←</span><span class="ttl">Cancel booking</span></div>
-          <div class="body">
-            <div class="wb" style="border-color:color-mix(in srgb,var(--green) 40%,transparent)"><div class="wrow sb"><span class="wh">You'll get back</span><span class="wchip ok">FREE</span></div>
-              <div style="font:900 24px/1 var(--font);color:var(--green)">₹18,240</div></div>
-            <div class="wnum"><div class="r"><span>Amount paid</span><span>₹18,240</span></div><div class="r"><span>Cancellation fee</span><span>− ₹0</span></div><div class="r tot"><span>Refund</span><b>₹18,240</b></div></div>
-            <div class="wb" style="gap:5px"><div class="wtxt b">Back to your card · 5–7 business days</div><div class="wrow"><div class="ring" style="--p:62"><span>18h</span></div><div class="wtxt">Free until 26 Oct, 2:00 PM</div></div></div>
-            <div class="wfield">＋ Add a reason (optional)</div>
-          </div>
-          <div class="ctabar"><div class="wbtn primary">Cancel &amp; get ₹18,240 back</div><div class="wbtn ghost">Keep booking</div></div>
-        </div></div><div class="cap">03 · Refund Preview</div></div>
-      </div>
+    <div class="eyebrow reveal">Wireframe ②, refund preview</div>
+    <h2 class="reveal">Where people decide: show the money, then ask.</h2>
+    <div class="wf-grid reveal" style="margin-top:10px">
+      <div class="appshots"><div class="shotwrap"><img class="appshot" src="../wireframes/screens/app-ios-03-preview.png" alt="Refund Preview"><div class="cap">03 · Refund preview (live Agoda quote)</div></div></div>
       <div class="lenses">
-        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>Refund amount is the hero; the <b>math is explicit</b> (Paid − Fee = Refund). Policy in plain language, CTA states the outcome. Reason is never a gate.</p></div>
-        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>Call <code>Cancellation Preview {bookingId}</code> on entry → render <code>refundRate</code> (<b>server truth, never computed</b>). Hold <code>reference</code> for Confirm; refresh if the quote goes stale.</p></div>
-        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Transparency here is the biggest lever on disputes &amp; chargebacks. Instrument drop-off. Non-refundable → offer <b>travel credit</b> (fast-follow) to save CSAT.</p></div>
+        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>Refund amount is the hero; the <b>math is explicit</b> (Paid − Fee = Refund). CTA states the outcome. Reason is never a gate.</p></div>
+        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>Call <code>Cancellation Preview {bookingId}</code> on entry → render <code>refundRate</code> (<b>server truth, fetched live, never computed</b>). Hold <code>reference</code> for Confirm.</p></div>
+        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Transparency here is the biggest lever on disputes & chargebacks. Non-refundable → offer <b>travel credit</b> (fast-follow).</p></div>
       </div>
     </div>
     <div class="branches reveal" id="s03branches" style="margin-top:8px">
-      <div class="branch free"><h4>● Free</h4><div class="amt">₹18,240</div><p>Inside the window — full refund. CTA: "Cancel &amp; get ₹18,240 back".</p></div>
-      <div class="branch partial"><h4>● Partial</h4><div class="amt">₹12,768</div><p>Penalty tier applies (−₹5,472). Show paid − fee clearly. CTA names the net refund.</p></div>
-      <div class="branch nonref"><h4>● Non-refundable</h4><div class="amt">₹0</div><p>Calm, honest warning (not alarm-red). CTA: "Cancel — no refund". Offer credit later.</p></div>
+      <div class="branch free"><h4>● Free</h4><div class="amt">₹18,240</div><p>Inside the window, full refund. CTA: "Cancel & get ₹18,240 back".</p></div>
+      <div class="branch partial"><h4>● Partial</h4><div class="amt">₹11,172</div><p>Penalty tier applies. Paid − fee shown clearly; CTA names the net refund.</p></div>
+      <div class="branch nonref"><h4>● Non-refundable</h4><div class="amt">₹0</div><p>Calm, honest warning (not alarm-red). CTA: "Cancel, no refund". Offer credit.</p></div>
     </div>
   </div>
 </section>
@@ -639,98 +593,55 @@ POST /cancellation/confirm
 <section class="slide wf-slide" data-title="Wireframe · Confirm">
   <div class="slide-no">0<b>9</b> · WIREFRAME ③ &nbsp; CONFIRM + RE-AUTH</div>
   <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ③ — the destructive step</div>
-    <h2 class="reveal">Deliberate confirmation, with re-auth.</h2>
-    <div class="wf-grid reveal" style="margin-top:18px">
-      <div class="phones">
-        <div class="phonewrap"><div class="phone"><div class="scr" id="s04">
-          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
-          <div class="appbar"><span class="bk">←</span><span class="ttl">Confirm cancellation</span></div>
-          <div class="body">
-            <div class="wb"><div class="wtxt b">The Leela Palace · 26–28 Oct</div><div class="wrow sb"><span class="wtxt">You'll be refunded</span><span class="wtxt b" style="color:var(--green)">₹18,240</span></div></div>
-            <div class="wb" style="border-color:color-mix(in srgb,var(--amber) 45%,transparent);background:var(--amber-soft)"><div class="wrow"><span style="font-size:16px">⚠️</span><div class="wtxt b" style="color:var(--amber)">This can't be undone.</div></div><div class="wtxt">The room is released to the hotel immediately.</div></div>
-            <div class="wb center" style="gap:4px"><div class="bio">☝</div><div class="wtxt b">Confirm with fingerprint</div><div class="wtxt">Re-authenticate to cancel</div></div>
-          </div>
-          <div class="ctabar"><div class="wbtn danger">Hold to confirm cancellation</div><div class="wbtn ghost">Go back</div></div>
-        </div></div><div class="cap">04 · Confirm + Re-auth</div></div>
-      </div>
+    <div class="eyebrow reveal">Wireframe ③, the destructive step</div>
+    <h2 class="reveal">Deliberate confirmation, with re-authentication.</h2>
+    <div class="wf-grid reveal" style="margin-top:12px">
+      <div class="appshots"><div class="shotwrap"><img class="appshot" src="../wireframes/screens/app-ios-04-confirm.png" alt="Confirm"><div class="cap">04 · Confirm + Face ID → Processing (~120s)</div></div></div>
       <div class="lenses">
-        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>One last plain summary + an <b>honest "can't be undone"</b>. Re-auth and a <b>hold-to-confirm</b> (not a stray tap). Easy back-out always visible.</p></div>
-        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p><code>Cancellation Confirm {bookingId, reference, cancelReason, refundRate, remark?}</code> + our <b>idempotency key</b>. Map reason → <code>cancelReason</code> 0–44. Retry-safe.</p></div>
-        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Deliberate friction prevents regret cancellations &amp; fraud. Reason codes feed analytics and supply insight back to Agoda.</p></div>
+        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>One last plain summary + an <b>honest "can't be undone"</b>. Re-auth (Face ID / fingerprint) and a deliberate confirm, never a stray tap. Easy back-out.</p></div>
+        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p><code>Cancellation Confirm {bookingId, reference, cancelReason, refundRate}</code> + our <b>idempotency key</b>. Reason → <code>cancelReason</code> 0–44. Then a processing state tolerant of the ~120s SLA / PENDING.</p></div>
+        <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Deliberate friction prevents regret cancellations & fraud. Reason codes feed analytics and supply insight back to Agoda.</p></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 10 WIREFRAME 4 : PROCESSING + CONFIRMED -->
-<section class="slide wf-slide" data-title="Wireframe · Processing & done">
-  <div class="slide-no">1<b>0</b> · WIREFRAME ④ &nbsp; PROCESSING → CONFIRMED</div>
+<!-- 10 WIREFRAME 4 : CONFIRMED + TRACKER -->
+<section class="slide wf-slide" data-title="Wireframe · Confirmed & tracker">
+  <div class="slide-no">1<b>0</b> · WIREFRAME ④ &nbsp; CONFIRMED → REFUND TRACKER</div>
   <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ④ — the wait, then relief</div>
-    <h2 class="reveal">Honest processing, then a trust artifact.</h2>
-    <div class="wf-grid reveal" style="margin-top:18px">
-      <div class="phones">
-        <div class="phonewrap"><div class="phone"><div class="scr" id="s05">
-          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
-          <div class="appbar"><span class="ttl">Cancelling…</span></div>
-          <div class="body center" style="justify-content:center;gap:12px">
-            <div class="spin"></div>
-            <div class="wtxt b">Confirming with the hotel</div>
-            <div class="wtxt" style="max-width:180px">This can take up to 2 minutes. You can leave — we'll notify you when it's done.</div>
-            <div class="wl" style="width:150px"></div>
-          </div>
-          <div class="ctabar"><div class="wbtn ghost">Notify me &amp; leave</div></div>
-        </div></div><div class="cap">05 · Processing (~120s)</div></div>
-
-        <div class="phonewrap"><div class="phone"><div class="scr" id="s06">
-          <div class="statusbar"><span>9:41</span><span class="notch"></span><span>▦ ▾ ▮</span></div>
-          <div class="appbar" style="background:var(--green)"><span class="ttl">Cancelled</span></div>
-          <div class="body center" style="gap:9px">
-            <div class="check">✓</div>
-            <div class="wh">Booking cancelled</div>
-            <div class="wtxt">Ref · <b>VOYA-CXL-70421</b></div>
-            <div class="wb" style="width:100%;border-color:color-mix(in srgb,var(--green) 40%,transparent)"><div class="wrow sb"><span class="wtxt b">Refund</span><span class="wtxt b" style="color:var(--green)">₹18,240</span></div><div class="wtxt">To your card · arrives in 5–7 business days</div></div>
-            <div class="wtxt">📧 Receipt sent to your email</div>
-          </div>
-          <div class="ctabar"><div class="wbtn blue">View refund status</div><div class="wbtn ghost">Find another stay</div></div>
-        </div></div><div class="cap">06 · Confirmed</div></div>
+    <div class="eyebrow reveal">Wireframe ④, relief, then proof</div>
+    <h2 class="reveal">A record people can trust, then a visible refund.</h2>
+    <div class="wf-grid reveal" style="margin-top:12px">
+      <div class="appshots">
+        <div class="shotwrap"><img class="appshot pair" src="../wireframes/screens/app-ios-05-done.png" alt="Confirmed"><div class="cap">05 · Confirmed</div></div>
+        <div class="shotwrap"><img class="appshot pair" src="../wireframes/screens/app-ios-06-tracker.png" alt="Refund tracker"><div class="cap">06 · Refund status</div></div>
       </div>
       <div class="lenses">
-        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>Processing shows progress + reassurance and <b>lets you leave</b> — never an infinite spinner. Confirmed leads with the <b>refund timeline</b>, the real anxiety-reliever.</p></div>
-        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>Await Confirm; on <code>PENDING</code>, poll refund status / await webhook <code>refund.completed</code>. Persist <code>cancellationId</code>; send email/push; move booking to Cancelled.</p></div>
+        <div class="lens design"><h4><span class="ic">🎨</span> Design · UI/UX</h4><p>Processing shows progress + lets you leave, never an infinite spinner. Confirmed leads with the <b>refund timeline</b>, what people are really anxious about.</p></div>
+        <div class="lens dev"><h4><span class="ic">⚙️</span> Developer · API</h4><p>Await Confirm; on <code>PENDING</code>, poll status / await webhook <code>refund.completed</code>. Persist <code>cancellationId</code>; email/push; move to Cancelled.</p></div>
         <div class="lens biz"><h4><span class="ic">📈</span> Business</h4><p>Confirmation deflects "did it work?" tickets; the <b>rebook CTA recovers revenue</b>; track refund-SLA adherence.</p></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 11 WIREFRAME 5 : EDGE STATES -->
-<section class="slide wf-slide" data-title="Wireframe · Edge states">
-  <div class="slide-no">1<b>1</b> · WIREFRAME ⑤ &nbsp; CORNER CASES</div>
+<!-- 11 WIREFRAME 5 : EDGE STATES + EVERY SKIN -->
+<section class="slide wf-slide" data-title="Wireframe · Edge & skins">
+  <div class="slide-no">1<b>1</b> · WIREFRAME ⑤ &nbsp; CORNER CASES + EVERY SKIN</div>
   <div class="slide-inner">
-    <div class="eyebrow reveal">Wireframe ⑤ — the unhappy paths <span class="hand" style="font-size:18px;margin-left:8px">this is the real product ↴</span></div>
-    <h2 class="reveal">Every failure has a next step.</h2>
-    <div class="edge reveal" id="s07" style="margin-top:18px">
-      <div class="mini e1"><div class="top">⊘ Non-refundable</div><div class="in">
-        <div class="wtxt b">You won't be refunded</div><div class="wnum"><div class="r"><span>Paid</span><span>₹9,500</span></div><div class="r tot"><span>Refund</span><b style="color:var(--red)">₹0</b></div></div>
-        <div class="wtxt">Per the hotel's policy.</div><div class="wbtn danger" style="font-size:11px;padding:8px">Cancel — no refund</div><div class="wtxt" style="text-align:center;color:var(--blue)">Get travel credit instead →</div></div></div>
-      <div class="mini e2"><div class="top">⟳ Couldn't cancel</div><div class="in">
-        <div style="font-size:22px;text-align:center">⚠️</div><div class="wtxt b" style="text-align:center">Something went wrong</div><div class="wtxt" style="text-align:center">Your booking is unchanged and you haven't been charged.</div>
-        <div class="wbtn blue" style="font-size:11px;padding:8px">Try again</div><div class="wbtn ghost" style="font-size:11px;padding:8px">Contact support</div></div></div>
-      <div class="mini e3"><div class="top">⏱ Window closed</div><div class="in">
-        <div class="wtxt b">Free cancellation has ended</div><div class="wtxt">It's within 24h of check-in. We can request an <b>assisted cancellation</b> or fee waiver.</div>
-        <div class="wbtn" style="font-size:11px;padding:8px;background:var(--amber);border-color:var(--amber);color:#fff">Request fee waiver</div><div class="wbtn ghost" style="font-size:11px;padding:8px">Chat with us</div></div></div>
-      <div class="mini e4"><div class="top">◈ Refund status</div><div class="in">
-        <div class="wrow"><span class="dot" style="background:var(--green)"></span><div class="wtxt b">Initiated · 25 Oct</div></div>
-        <div class="wrow"><span class="dot breathe" style="background:var(--amber)"></span><div class="wtxt b">Processing</div></div>
-        <div class="wrow"><span class="dot" style="background:var(--line)"></span><div class="wtxt">Refunded · by 1 Nov</div></div>
-        <div class="wl" style="width:80%"></div><div class="wtxt">₹18,240 to •••• 4291</div></div></div>
+    <div class="eyebrow reveal">Wireframe ⑤, the unhappy paths, on every skin</div>
+    <h2 class="reveal">Every failure has a next step, iOS, Android & low-fi.</h2>
+    <div class="appshots reveal" style="margin-top:14px">
+      <div class="shotwrap"><img class="appshot edge" src="../wireframes/screens/app-ios-07-error.png" alt="Error"><div class="cap">Error → retry / support</div></div>
+      <div class="shotwrap"><img class="appshot edge" src="../wireframes/screens/app-ios-08-assisted.png" alt="Assisted"><div class="cap">Past window → fee-waiver</div></div>
+      <div class="shotwrap"><img class="appshot edge" src="../wireframes/screens/app-android-preview.png" alt="Android"><div class="cap">Android · Material 3</div></div>
+      <div class="shotwrap"><img class="appshot edge" src="../wireframes/screens/app-blueprint-preview.png" alt="Blueprint"><div class="cap">Low-fi wireframe</div></div>
     </div>
     <div class="grid g3 reveal" style="margin-top:14px">
-      <div class="lens design" style="margin:0"><h4><span class="ic">🎨</span> Design</h4><p>No dead ends — plain-language errors, each with a clear action. Non-refundable stays calm; status tracker answers "where's my money?".</p></div>
+      <div class="lens design" style="margin:0"><h4><span class="ic">🎨</span> Design</h4><p>No dead ends, plain-language errors, each with a clear action. Same flow renders natively on iOS & Android, and as a low-fi wireframe.</p></div>
       <div class="lens dev" style="margin:0"><h4><span class="ic">⚙️</span> Developer</h4><p>Map Agoda <code>errorMessage{id,subId,message}</code> + <code>error 108</code>; retriable vs terminal; <b>idempotent retry</b> (same <code>reference</code>); graceful offline.</p></div>
-      <div class="lens biz" style="margin:0"><h4><span class="ic">📈</span> Business</h4><p>Good failure UX = fewer chargebacks and calls. Track failure reasons to fix the top causes; fee-waiver protects goodwill.</p></div>
+      <div class="lens biz" style="margin:0"><h4><span class="ic">📈</span> Business</h4><p>Good failure UX = fewer chargebacks and calls. 55 corner cases catalogued & demoable in the live app.</p></div>
     </div>
   </div>
 </section>
@@ -747,17 +658,17 @@ POST /cancellation/confirm
     <div class="grid g2 reveal" style="margin-top:20px">
       <div class="card">
         <h3>The moment</h3>
-        <p class="small muted" style="margin-top:8px">Cancellation is the most emotional step in travel — plans fell through, money's at stake, a fight half-expected. Make it clear, fast and honest and a <i>negative</i> moment becomes a reason to trust us and rebook. Make it opaque and users call support, dispute with the bank, and leave one-star reviews.</p>
+        <p class="small muted" style="margin-top:8px">Cancellation is the most emotional step in travel, plans fell through, money's at stake, a fight half-expected. Make it clear, fast and honest and a <i>negative</i> moment becomes a reason to trust us and rebook. Make it opaque and users call support, dispute with the bank, and leave one-star reviews.</p>
         <h3 style="margin-top:14px">The flow</h3>
-        <p class="small muted" style="margin-top:8px">Booking Details → <b>Cancel</b> → we call Agoda <b>Preview</b> and show the refund math, method, ETA and a live deadline countdown — the number is <b>Agoda's, not ours</b>. The screen adapts to Free / Partial / Non-refundable; the CTA states the outcome. Continue → optional reason → <b>Confirm + re-auth</b> → Agoda <b>Confirm</b> (with <code>reference</code> + idempotency key) → honest <b>Processing</b> (~120s, async-tolerant) → <b>Confirmed</b> with reference, refund &amp; timeline, plus a receipt and status tracker.</p>
+        <p class="small muted" style="margin-top:8px">Booking Details → <b>Cancel</b> → we call Agoda <b>Preview</b> and show the refund math, method, ETA and a live deadline countdown, the number is <b>Agoda's, not ours</b>. The screen adapts to Free / Partial / Non-refundable; the CTA states the outcome. Continue → optional reason → <b>Confirm + re-auth</b> → Agoda <b>Confirm</b> (with <code>reference</code> + idempotency key) → honest <b>Processing</b> (~120s, async-tolerant) → <b>Confirmed</b> with reference, refund &amp; timeline, plus a receipt and status tracker.</p>
       </div>
       <div class="card" style="background:var(--surface-2)">
         <h3>Why these choices</h3>
         <ul class="small muted" style="margin:10px 0 0 16px;line-height:1.85">
-          <li><b>Transparency over optimism</b> — show the real refund up front; lose a few cancels, save far more in disputes.</li>
-          <li><b>Server-authoritative money</b> — Agoda's number, surfaced, never recomputed on device.</li>
-          <li><b>Deliberate friction</b> — re-auth + outcome-stating CTA protect users from regret &amp; fraud, without feeling like a trap.</li>
-          <li><b>Designed for the unhappy path</b> — the policy branches and error states <i>are</i> the product; the happy path is the easy 20%.</li>
+          <li><b>Transparency over optimism</b>, show the real refund up front; lose a few cancels, save far more in disputes.</li>
+          <li><b>Server-authoritative money</b>, Agoda's number, surfaced, never recomputed on device.</li>
+          <li><b>Deliberate friction</b>, re-auth + outcome-stating CTA protect users from regret &amp; fraud, without feeling like a trap.</li>
+          <li><b>Designed for the unhappy path</b>, the policy branches and error states <i>are</i> the product; the happy path is the simple part.</li>
         </ul>
         <div class="hr"></div>
         <p class="hand" style="font-size:20px">the refund shown is the refund paid.</p>
@@ -773,7 +684,7 @@ POST /cancellation/confirm
     <div class="eyebrow reveal" style="color:var(--biz)">What we'll watch · risks · what's next</div>
     <h2 class="reveal">Ship v1, learn at the Preview screen, then go deeper.</h2>
     <div class="grid g3 reveal" style="margin-top:22px">
-      <div class="card"><h3 style="color:var(--biz)">We'll watch</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li>Self-serve cancel rate</li><li>Cancellation tickets ↓</li><li>Disputes / chargebacks ↓</li><li><b>Preview drop-off</b> (make-or-break)</li><li>Refund-SLA adherence</li><li>Post-cancel rebooking · CSAT</li></ul></div>
+      <div class="card"><h3 style="color:var(--biz)">We'll watch</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li>Self-serve cancel rate</li><li>Cancellation tickets ↓</li><li>Disputes / chargebacks ↓</li><li><b>Preview drop-off</b> (the one that matters most)</li><li>Refund-SLA adherence</li><li>Post-cancel rebooking · CSAT</li></ul></div>
       <div class="card"><h3 style="color:var(--amber)">Risks &amp; open Qs</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li>Exact Agoda REST paths + refund-status/webhook channel to confirm</li><li>Non-refundable = satisfaction cliff → travel-credit</li><li>Deadline timezone correctness (hotel local time)</li></ul></div>
       <div class="card" style="border-color:color-mix(in srgb,var(--orange) 40%,transparent)"><h3 style="color:var(--orange)">Roadmap</h3><ul class="small muted" style="margin:8px 0 0 15px;line-height:1.8"><li><b>v1</b> this flow</li><li><b>v1.1</b> refund-status push · "modify instead"</li><li><b>vNext</b> partial / per-room cancel · non-ref → travel credit · group bookings</li></ul></div>
     </div>
@@ -786,7 +697,11 @@ POST /cancellation/confirm
         <span class="tag">flows/cancellation-flow.mmd</span>
         <span class="tag">wireframes/design-notes.md</span>
       </div>
-      <div class="hand" style="font-size:22px">thank you — team Voya ✦</div>
+      <div style="text-align:right">
+        <div style="font-weight:800;font-size:15px;color:var(--orange)">▶ Try it live</div>
+        <div class="small" style="color:var(--ink)">agoda-cancellation-flow.vercel.app</div>
+        <div class="small muted">iOS &amp; Android · wireframe &amp; design · 55 corner cases · live Agoda API</div>
+      </div>
     </div>
   </div>
 </section>

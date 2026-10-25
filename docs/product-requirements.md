@@ -1,4 +1,4 @@
-# Product Requirements — Hotel Cancellation Flow
+# Product Requirements, Hotel Cancellation Flow
 
 **Product:** Voya (Android) · hotels booked via Agoda's Demand API
 **Use case:** Self-serve cancellation of an existing hotel booking
@@ -7,14 +7,14 @@
 
 ## 1. Problem
 Users can book in Voya, but cannot cancel in Voya. When plans change they call support
-or dispute via their bank — the highest-anxiety, lowest-trust moment in travel. That drives
+or dispute via their bank, the highest-anxiety, lowest-trust moment in travel. That drives
 support cost, chargebacks, and churn, and it leaks a moment that could *build* loyalty.
 
 ## 2. Goal
-Let a user cancel a confirmed booking themselves, with **zero surprises about the refund** —
+Let a user cancel a confirmed booking themselves, with **zero surprises about the refund**, 
 they always see exactly what they get back, and when, *before* they commit.
 
-**North-star principle:** *No surprises.* The refund shown is the refund paid.
+**The one rule:** *No surprises.* The refund shown is the refund paid.
 
 ## 3. Users
 - **Primary:** a traveller whose plans changed, on mobile, often time-pressured and anxious.
@@ -37,7 +37,7 @@ offline/agent cancellation. *(see [assumptions](./assumptions.md))*
 - **FR6** Cancel via Agoda *Cancellation Confirm* with the Preview `reference` + idempotency key.
 - **FR7** Show a **processing** state tolerant of the ~120 s SLA / async `PENDING`.
 - **FR8** Show a **confirmation** with cancellation reference, refund amount + timeline, receipt.
-- **FR9** Recover gracefully from every error (network, API, auth, past-window) — no dead ends.
+- **FR9** Recover gracefully from every error (network, API, auth, past-window), no dead ends.
 - **FR10** Provide a **refund status tracker** after cancellation.
 
 ## 6. Non-functional

@@ -1,4 +1,4 @@
-// Mock of Agoda Demand API — Cancellation CONFIRM (two-step cancel, step 2).
+// Mock of Agoda Demand API, Cancellation CONFIRM (two-step cancel, step 2).
 // Mirrors Agoda: 200 (empty-ish) on success, errorMessage{id,subId,message} on failure,
 // PENDING when the refund settles async. Idempotency-Key is honoured (same key => same result).
 import { NextResponse } from "next/server";

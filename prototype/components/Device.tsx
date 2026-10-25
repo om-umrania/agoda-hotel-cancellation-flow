@@ -52,6 +52,27 @@ function policyChip(s: Scenario) {
   return { cls: "ok", txt: "Free cancellation" };
 }
 
+function FaceId() {
+  return (
+    <svg viewBox="0 0 48 48" width="34" height="34" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 17v-6a4 4 0 0 1 4-4h6M31 7h6a4 4 0 0 1 4 4v6M41 31v6a4 4 0 0 1-4 4h-6M17 41h-6a4 4 0 0 1-4-4v-6" />
+      <path d="M18 20v3M30 20v3M24 20v6l-2.5 1.5" />
+      <path d="M18.5 31c2.2 2 8.8 2 11 0" />
+    </svg>
+  );
+}
+function Fingerprint() {
+  return (
+    <svg viewBox="0 0 48 48" width="34" height="34" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round">
+      <path d="M12 23a12 12 0 0 1 20-9" />
+      <path d="M17 24a7 7 0 0 1 13.5-2.5" />
+      <path d="M23 24a1 1 0 0 1 2 0c0 6-1 9-3 12" />
+      <path d="M30 24c0 7-1.5 10-3.5 13" />
+      <path d="M12 29c0 4-.5 6-2 8" />
+    </svg>
+  );
+}
+
 export default function Device(p: DeviceProps) {
   const { platform, fidelity, step, s } = p;
   const refund = p.preview?.refund ?? s.refund;
@@ -64,7 +85,14 @@ export default function Device(p: DeviceProps) {
     return (
       <>
         <span className="island" />
-        <div className="statusbar"><span>9:41</span><span className="r">5G&nbsp;&nbsp;▂▄▆&nbsp;&nbsp;100%</span></div>
+        <div className="statusbar">
+          <span className="sb-time">9:41</span>
+          <span className="r">
+            <span style={{ letterSpacing: 1, fontSize: 12 }}>▁▃▅</span>
+            <span>{platform === "ios" ? "5G" : "4G"}</span>
+            <span className="bat">100%<i /></span>
+          </span>
+        </div>
         <div className="nav" style={navStyle}>
           {back && (
             <button className="back" onClick={p.onBack} aria-label="Back">
@@ -174,7 +202,7 @@ export default function Device(p: DeviceProps) {
         }
         const pc = policyChip(s);
         const refundColor = refund > 0 ? "var(--green)" : "var(--red)";
-        const ctaLabel = refund > 0 ? `Cancel & get ${money(refund, s.currency)} back` : "Cancel — no refund";
+        const ctaLabel = refund > 0 ? `Cancel & get ${money(refund, s.currency)} back` : "Cancel, no refund";
         return (
           <>
             <Chrome title="Cancel booking" back />
@@ -197,7 +225,7 @@ export default function Device(p: DeviceProps) {
                   <div className="card" style={{ borderTop: `3px solid ${refundColor}` }}>
                     <div className="row sb"><span className="h2">You&apos;ll get back</span><span className={`chip ${pc.cls}`}>{pc.txt}</span></div>
                     <div className="big" style={{ color: refundColor }}>{money(refund, s.currency)}</div>
-                    {s.policy === "payathotel" && <div className="xs">Nothing was charged — we&apos;ll just release the room.</div>}
+                    {s.policy === "payathotel" && <div className="xs">Nothing was charged, we&apos;ll just release the room.</div>}
                   </div>
                   {paid > 0 && (
                     <div className="money">
@@ -206,7 +234,7 @@ export default function Device(p: DeviceProps) {
                       <div className="r tot"><span>Refund</span><b style={{ color: refundColor }}>{money(refund, s.currency)}</b></div>
                     </div>
                   )}
-                  {s.policy === "multitier" && <div className="xs">You&apos;re in the <b>50% tier</b> now — non-refundable after 30 Nov.</div>}
+                  {s.policy === "multitier" && <div className="xs">You&apos;re in the <b>50% tier</b> now, non-refundable after 30 Nov.</div>}
                   {refund > 0 && (
                     <div className="card tint">
                       <div className="h2">Back to your card · {s.etaDays}</div>
@@ -250,9 +278,11 @@ export default function Device(p: DeviceProps) {
               )}
               <div className="warnbox"><div className="row"><span style={{ fontSize: 17 }}>⚠️</span><div className="h2" style={{ color: "var(--amber)" }}>This can&apos;t be undone.</div></div><div className="xs">The room is released to the hotel immediately.</div></div>
               <div className="card" style={{ alignItems: "center", textAlign: "center" }}>
-                <button className={`bio ${p.authed ? "ok" : p.authFail ? "fail" : ""}`} onClick={p.onAuth}>{p.authed ? "✓" : platform === "ios" ? "😊" : "☝"}</button>
-                <div className="h2">{p.authed ? "Identity confirmed" : platform === "ios" ? "Confirm with Face ID" : "Confirm with fingerprint"}</div>
-                <div className="xs">{p.authed ? "Re-authenticated" : "Re-authenticate to cancel"}</div>
+                <button className={`bio ${p.authed ? "ok" : p.authFail ? "fail" : ""}`} onClick={p.onAuth} aria-label="Authenticate">
+                  {p.authed ? <span style={{ fontSize: 28 }}>✓</span> : platform === "ios" ? <FaceId /> : <Fingerprint />}
+                </button>
+                <div className="h2">{p.authed ? "It's really you" : platform === "ios" ? "Confirm with Face ID" : "Confirm with fingerprint"}</div>
+                <div className="xs">{p.authed ? "You're verified" : "Sign in again to cancel"}</div>
               </div>
             </div>
             <div className="bottom">
@@ -271,7 +301,7 @@ export default function Device(p: DeviceProps) {
             <div className="body mid">
               <div className="spin" />
               <div className="h1" style={{ marginTop: 10 }}>Confirming with the hotel</div>
-              <div className="s" style={{ maxWidth: 220, marginTop: 6 }}>{s.fault === "timeout" ? "Agoda is taking longer than usual — we won't spin forever. We'll reconcile and update you." : "This can take up to 2 minutes. You can leave — we'll notify you."}</div>
+              <div className="s" style={{ maxWidth: 220, marginTop: 6 }}>{s.fault === "timeout" ? "Agoda is taking a little longer than usual. We won't leave you hanging, we'll keep checking and let you know." : "This can take up to two minutes. Feel free to leave, we'll send you a notification when it's done."}</div>
               <div className="apibar" style={{ marginTop: 14 }}><span className="live"><span className="d" />POST</span> <span className="u">/cancellation/confirm</span></div>
             </div>
             <div className="bottom"><button className="btn ghost">Notify me &amp; leave</button></div>
@@ -291,10 +321,10 @@ export default function Device(p: DeviceProps) {
               {refund > 0 ? (
                 <div className="okbox" style={{ width: "100%", marginTop: 10, textAlign: "left" }}>
                   <div className="row sb"><span className="h2">Refund</span><span className="h2 num" style={{ color: "var(--green)" }}>{money(refund, s.currency)}</span></div>
-                  <div className="xs">{p.pending ? "Refund is being confirmed — we'll update you shortly." : `To your card · arrives in ${s.etaDays}`}</div>
+                  <div className="xs">{p.pending ? "Refund is being confirmed, we'll update you shortly." : `To your card · arrives in ${s.etaDays}`}</div>
                 </div>
               ) : (
-                <div className="card tint" style={{ width: "100%", marginTop: 10 }}><div className="xs">{s.policy === "payathotel" ? "Nothing was charged — no refund needed." : "This rate was non-refundable, so there's no refund."}</div></div>
+                <div className="card tint" style={{ width: "100%", marginTop: 10 }}><div className="xs">{s.policy === "payathotel" ? "Nothing was charged, no refund needed." : "This rate was non-refundable, so there's no refund."}</div></div>
               )}
               {p.pending && <span className="chip warn" style={{ marginTop: 8 }}>Refund pending</span>}
               <div className="xs" style={{ marginTop: 8 }}>📧 Receipt sent to your email</div>
@@ -320,7 +350,7 @@ export default function Device(p: DeviceProps) {
               <div className="s" style={{ maxWidth: 230, marginTop: 6 }}>{is108 ? "We hit a temporary issue on our side. Your booking is unchanged and you haven't been charged." : "We couldn't reach the hotel just now. Your booking is unchanged and you haven't been charged."}</div>
               <div className="redbox" style={{ width: "100%", marginTop: 12, textAlign: "left" }}>
                 <div className="xs" style={{ color: "var(--red)" }}>
-                  {err ? `Agoda errorMessage · id ${err.id}${err.subId ? "/" + err.subId : ""} — "${err.message}"` : "Mapped from Agoda errorMessage."} {" "}
+                  {err ? `Agoda errorMessage · id ${err.id}${err.subId ? "/" + err.subId : ""}, "${err.message}"` : "Mapped from Agoda errorMessage."} {" "}
                   Mapped to friendly copy; retry reuses the same reference (no double refund).
                 </div>
               </div>
@@ -337,7 +367,7 @@ export default function Device(p: DeviceProps) {
           <>
             <Chrome title="Assisted cancellation" back tone="amber" />
             <div className="body">
-              <div className="warnbox"><div className="h2" style={{ color: "var(--amber)" }}>{post ? "Your stay has started" : "Free cancellation has ended"}</div><div className="xs">{post ? "After check-in, cancellation needs manual handling." : "It's within 24 hours of check-in — self-serve cancellation is closed."}</div></div>
+              <div className="warnbox"><div className="h2" style={{ color: "var(--amber)" }}>{post ? "Your stay has started" : "Free cancellation has ended"}</div><div className="xs">{post ? "After check-in, cancellation needs manual handling." : "It's within 24 hours of check-in, self-serve cancellation is closed."}</div></div>
               <div className="card"><div className="h2">We can still help</div><div className="s">We&apos;ll request an <b>assisted cancellation</b> or fee waiver with your booking details pre-filled ({s.hotel}).</div></div>
               <div className="card tint"><div className="xs">Common waiver reasons: medical emergency, natural disaster, duplicate booking.</div></div>
             </div>
@@ -361,7 +391,7 @@ export default function Device(p: DeviceProps) {
                   <div className="tl"><span className="pt" /><div className="col"><div className="h2">Refunded</div><div className="xs">Expected in {s.etaDays}</div></div></div>
                 </div>
               </div>
-              {delayed && <div className="redbox"><div className="xs" style={{ color: "var(--red)" }}>Past the promised SLA — we&apos;ve escalated it for you.</div></div>}
+              {delayed && <div className="redbox"><div className="xs" style={{ color: "var(--red)" }}>Past the promised SLA, we&apos;ve escalated it for you.</div></div>}
             </div>
             <div className="bottom"><button className="btn ghost" onClick={p.onRebook}>Done</button></div>
           </>
@@ -378,7 +408,7 @@ export default function Device(p: DeviceProps) {
     <div className="device" data-plat={platform} data-fid={fidelity}>
       <div className="frame">
         <div className="screen">
-          {fidelity === "blueprint" && <span className="bp-tag">Blueprint</span>}
+          {fidelity === "blueprint" && <span className="bp-tag">Wireframe</span>}
           <div className="fx" key={step + s.id} style={{ display: "contents" }}>{body}</div>
           {coach && (
             <div className="coach b-cta">

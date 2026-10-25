@@ -17,15 +17,15 @@ flowchart, wireframes, and product note.
 
 ## Booking, money & identity
 5. **Booking linkage.** Every in-app booking stores Agoda's `bookingId`, mapped to the
-   Voya user — so we can Retrieve and Cancel it later.
+   Voya user, so we can Retrieve and Cancel it later.
 6. **Payment model.** Primary case is **prepaid** (captured at booking). "Pay at hotel"
    is handled as an edge case (nothing to refund; just release the reservation).
 7. **Refunds.** Refunds go back to the **original payment method** and are **settled by
    Agoda / the payment rails**. Voya surfaces status and timeline but does not move money
-   itself. Refund amount is **server-authoritative** — taken from Agoda's Cancellation
+   itself. Refund amount is **server-authoritative**, taken from Agoda's Cancellation
    **Preview** call, never computed on the client.
 8. **Auth.** The user is already signed into Voya. The destructive confirm step requires
-   a **re-authentication** (biometric / device credential) — assumed, not Agoda-mandated.
+   a **re-authentication** (biometric / device credential), assumed, not Agoda-mandated.
 
 ## Policy, locale & timing
 9. **Currency & locale.** Amounts are shown in the **booking currency**; deadlines are
@@ -41,8 +41,8 @@ flowchart, wireframes, and product note.
 ## Technical
 12. **Latency.** Agoda's cancellation SLA is **~120 s**; the app shows an explicit
     processing state and tolerates an async `PENDING` result (resolved by polling a refund
-    status endpoint or an Agoda webhook — *assumed channel*).
+    status endpoint or an Agoda webhook, *assumed channel*).
 13. **Idempotency.** Confirm carries Agoda's `reference` (from Preview) **plus** our own
     idempotency key, so a retry or double-tap can never cancel twice or double-refund.
 14. **Error mapping.** Agoda `errorMessage{id,subId,message}` and auth `error 108` are
-    mapped to plain-language, recoverable user messages — never shown raw.
+    mapped to plain-language, recoverable user messages, never shown raw.

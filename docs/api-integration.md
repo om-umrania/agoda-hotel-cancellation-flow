@@ -1,4 +1,4 @@
-# API Integration — Developer Notes
+# API Integration, Developer Notes
 
 How the cancellation flow is wired to the **Agoda Demand API** (Partner Fulfillment model).
 Field names are from Agoda's public docs; exact paths and the refund-status channel are
@@ -22,7 +22,7 @@ Content-Type: application/json
 | Confirm + re-auth | **Cancellation → Confirm** `{bookingId, reference, cancelReason, refundRate, remark?}` | → HTTP 200 (empty) or `errorMessage{id,subId,message}` | `cancelReason` ∈ 0–44. Attach our idempotency key. ~120 s SLA. |
 | Processing | (await Confirm / poll) | `PENDING` tolerated | Don't block UI forever; allow background + notify. |
 | Confirmed | Refund **status** (assumed) / webhook `refund.completed` | `cancellationId`, refund amount, ETA | Store cancellation ref; send email/push receipt. |
-| Edge: past window | route to **Fee-Waiver / assisted** | — | Agoda allows cancel up to 1 day before check-in. |
+| Edge: past window | route to **Fee-Waiver / assisted** | | Agoda allows cancel up to 1 day before check-in. |
 
 ## Request sketches
 
@@ -63,9 +63,9 @@ Idempotency-Key: voya-cxl-889001234-9f2a      // our guard (assumed)
 ```
 
 ## Rules the client must respect
-- **Never compute the refund locally** — always show Agoda's `refundRate`.
+- **Never compute the refund locally**, always show Agoda's `refundRate`.
 - **`reference` is mandatory on Confirm** and ties the confirm to the previewed amount.
-- **Idempotent Confirm** — identical `(bookingId, reference, idempotency-key)` must be safe to retry.
-- **Reason mapping** — our human reasons map to Agoda `cancelReason` integer codes (0–44).
-- **Error copy** — map `errorMessage` / `error 108`; never surface raw codes.
-- **Window guard** — if now ≥ (check-in − 1 day), hide self-serve cancel and offer assisted / fee-waiver.
+- **Idempotent Confirm**, identical `(bookingId, reference, idempotency-key)` must be safe to retry.
+- **Reason mapping**, our human reasons map to Agoda `cancelReason` integer codes (0–44).
+- **Error copy**, map `errorMessage` / `error 108`; never surface raw codes.
+- **Window guard**, if now ≥ (check-in − 1 day), hide self-serve cancel and offer assisted / fee-waiver.

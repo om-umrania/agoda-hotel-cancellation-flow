@@ -90,18 +90,19 @@ export default function Prototype() {
       {/* ---------------- HERO ---------------- */}
       <header className="hero">
         <div className="wrap">
-          <span className="badge"><span className="b">V</span> Voya × Agoda · iOS &amp; Android</span>
-          <h1>Cancel a hotel booking — <span className="bl">guided</span>, <span className="or">end to end</span>.</h1>
+          <span className="badge"><span className="b">V</span> Voya and Agoda · iOS and Android</span>
+          <h1>Cancelling a hotel booking, <span className="bl">made simple</span>.</h1>
           <p className="lead">
-            A working prototype of a self-serve cancellation flow powered by Agoda&apos;s Demand API.
-            Operate the phone on the left; the panel on the right guides every step. Switch
-            <b> iOS ⇄ Android</b> and <b> Design ⇄ Blueprint</b>, and try {SCENARIOS.length} real situations &amp; {CORNER_COUNT} corner cases.
+            This is a working prototype of a self-serve cancellation flow for our Android and iOS
+            hotel app, built on Agoda&apos;s booking APIs. You tap through the phone on the left, and the
+            panel on the right tells you what to do next. Switch between iOS and Android, wireframe
+            and design, and try {SCENARIOS.length} real situations and {CORNER_COUNT} tricky cases.
           </p>
-          <span className="hand">no surprises about the refund ↝</span>
+          <p className="hand">You always see the exact refund before you confirm. No surprises.</p>
           <div className="chips">
             <span className="m lead-chip">PM101 · Masters&apos; Union</span>
-            <span className="m">Om · Param · Shabareesh · Arushi · Manya</span>
-            <span className="m">Live API: fetches /api/cancellation/*</span>
+            <span className="m">Om, Param, Shabareesh, Arushi, Manya</span>
+            <span className="m">Really calls the API: /api/cancellation</span>
           </div>
         </div>
       </header>
@@ -120,7 +121,7 @@ export default function Prototype() {
             <span className="lbl">Fidelity</span>
             <div className="seg">
               <button className={fidelity === "design" ? "on" : ""} onClick={() => setFidelity("design")}>✦ Design</button>
-              <button className={fidelity === "blueprint" ? "on" : ""} onClick={() => setFidelity("blueprint")}>✎ Blueprint</button>
+              <button className={fidelity === "blueprint" ? "on" : ""} onClick={() => setFidelity("blueprint")}>✎ Wireframe</button>
             </div>
           </div>
           <div className="ctl">
@@ -154,7 +155,7 @@ export default function Prototype() {
               onRebook={() => resetFlow("trips")}
               onRetry={() => { setSubmitting(false); setConfirmResult(null); setStep("confirm"); }}
             />
-            <div className="devcap">{platform === "ios" ? "iPhone · iOS 18" : "Android 15 · Material 3"} — {fidelity === "design" ? "hi-fi" : "low-fi blueprint"}</div>
+            <div className="devcap">{platform === "ios" ? "iPhone · iOS 18" : "Android 15 · Material 3"} · {fidelity === "design" ? "design" : "wireframe"}</div>
             <div className="devhint">Follow the <b>DO THIS</b> step on the right, or the 👆 hint on the phone.</div>
           </div>
 
@@ -163,7 +164,7 @@ export default function Prototype() {
 
         {/* ---------------- DELIVERABLES ---------------- */}
         <div className="section-h"><h2>Deliverables</h2><span className="count">all docs</span>
-          <span className="s" style={{ color: "var(--ink-2)" }}>everything the assignment asks for — click to open on GitHub</span></div>
+          <span className="s" style={{ color: "var(--ink-2)" }}>everything the assignment asks for. Open any of them on GitHub.</span></div>
         <div className="docgrid">
           {DOCS.map((d) => (
             <a className="doc" key={d.path} href={d.href} target="_blank" rel="noreferrer">
@@ -216,9 +217,12 @@ export default function Prototype() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 8 }}>
                   {list.map((sc) => (
                     <button key={sc.id} onClick={() => pickScenario(sc.id)}
-                      style={{ textAlign: "left", border: `1px solid ${sc.id === sid ? "var(--brand)" : "var(--line)"}`, background: sc.id === sid ? "color-mix(in srgb,var(--brand) 8%,transparent)" : "var(--card)", borderRadius: 12, padding: "10px 12px", display: "flex", gap: 10, alignItems: "flex-start" }}>
-                      <span style={{ fontSize: 18 }}>{sc.emoji}</span>
-                      <span className="col"><span className="h2">{sc.label}</span><span className="xs clamp2">{sc.handling}</span></span>
+                      style={{ textAlign: "left", border: `1px solid ${sc.id === sid ? "var(--brand)" : "var(--line)"}`, background: sc.id === sid ? "color-mix(in srgb,var(--brand) 8%,transparent)" : "var(--card)", borderRadius: 12, padding: "11px 13px", display: "flex", flexDirection: "column", gap: 5 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                        <span className="emoji" style={{ fontSize: 18, width: 22 }}>{sc.emoji}</span>
+                        <span className="h2 ellipsis">{sc.label}</span>
+                      </span>
+                      <span className="xs clamp2">{sc.handling}</span>
                     </button>
                   ))}
                 </div>

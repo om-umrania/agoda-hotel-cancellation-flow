@@ -1,4 +1,4 @@
-// Mock of Agoda Demand API — Cancellation PREVIEW (two-step cancel, step 1).
+// Mock of Agoda Demand API, Cancellation PREVIEW (two-step cancel, step 1).
 // Real endpoint needs partner Site-ID/API-Key + IP whitelisting; this returns the
 // same shape so the client flow runs end-to-end over the network.
 import { NextResponse } from "next/server";
