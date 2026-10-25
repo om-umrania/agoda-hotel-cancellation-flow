@@ -4,3 +4,6 @@
 .vercel
 # OS/editor
 Thumbs.db
+# Superset — per-user override + runtime state (keep shared scripts committed)
+.superset/config.local.json
+.superset/.dev-port
